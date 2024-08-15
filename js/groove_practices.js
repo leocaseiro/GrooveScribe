@@ -21,13 +21,18 @@ function GroovePractices() {
 		document.getElementById('saveGroovePracticeButton').style.display = 'none';
 	}
 
-	root.init = () => {
-		const isIframe = window !== window.parent;
-		const isParentOrigin = window.location.origin === root.targetOrigin;
+	root.isIframeLoadedInsideTargetOrigin = () => {
+		const isIframe = window.self !== window.top;
+		const originPath = window.top.location.origin + window.top.location.pathname;
+		const originUrl = originPath.substring(0, originPath.lastIndexOf('/'));
+		const isParentOrigin = originUrl === root.targetOrigin;
 
+		return !isIframe || !isParentOrigin;
+	}
+
+	root.init = () => {
 		// hide save button if not iframe from targetOrigin
-		if (!isIframe || !isParentOrigin) {
-			// hide save button
+		if (isIframeLoadedInsideTargetOrigin) {
 			root.hideSaveButton();
 		}
 	}
