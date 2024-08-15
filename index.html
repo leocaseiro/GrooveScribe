@@ -55,6 +55,7 @@
 		<!-- jsmidgen for generating a midi file -->
 		<script src="./js/jsmidgen.js" type="text/javascript"></script>
 		<!--   our custom JS  -->
+		<script src="js/groove_practices.js"></script>
 		<script src="js/groove_writer.js"></script>
 		<script src="js/groove_utils.js"></script>
 		<script src="js/grooves.js"></script>
@@ -70,6 +71,10 @@
 			if (myGrooveWriter.myGrooveUtils.debugMode) {
 				document.write('<link rel="stylesheet" type="text/css" href="css/groove_debug.css">');
 			}
+			var myGroovePractices = new GroovePractices();
+			document.addEventListener('DOMContentLoaded', () => {
+				myGroovePractices.init();
+			});
 		</script>
 
     </head>
@@ -180,6 +185,7 @@
 					<span class=" grooveDB_hidden pageBottomButton" id="stickingsButton" onclick="myGrooveWriter.stickingsAnchorClick();"><span class="bottomButtonLabel">STICKINGS</span></span>
 					<span class=" grooveDB_hidden pageBottomButton" id="downloadButton" onclick="myGrooveWriter.DownloadAnchorClick();"><span class="bottomButtonIcon"><i class="fa fa-download fa-2x"></i></span><span class="bottomButtonLabel">DOWNLOAD</span></span>
 					<span class=" grooveDB_hidden pageBottomButton" id="printButton" onclick="myGrooveWriter.printMusic();"><span class="bottomButtonIcon"><i class="fa fa-print fa-2x"></i></span><span class="bottomButtonLabel">PRINT</span></span>
+					<span class=" grooveDB_hidden pageBottomButton" id="saveGroovePracticeButton" onclick="myGroovePractices.saveGroovePractice();"><span class="bottomButtonIcon"><i class="fa fa-save fa-2x"></i></span><span class="bottomButtonLabel">SAVE</span></span>
 					<span class=" grooveDB_hidden pageBottomButton" id="shareSaveButton" onclick="event.preventDefault(); myGrooveWriter.show_FullURLPopup();"><span class="bottomButtonIcon"><i class="fa fa-share fa-2x"></i></span><span class="bottomButtonLabel">SHARE</span></span>
 				</div>
 
