@@ -27,12 +27,12 @@ function GroovePractices() {
 		const originUrl = originPath.substring(0, originPath.lastIndexOf('/'));
 		const isParentOrigin = originUrl === root.targetOrigin;
 
-		return !isIframe || !isParentOrigin;
+		return isIframe && isParentOrigin;
 	}
 
 	root.init = () => {
 		// hide save button if not iframe from targetOrigin
-		if (root.isIframeLoadedInsideTargetOrigin()) {
+		if (!root.isIframeLoadedInsideTargetOrigin()) {
 			root.hideSaveButton();
 		}
 	}
