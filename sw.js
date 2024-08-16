@@ -1,9 +1,11 @@
-var version = '1.2.0';
-var timeStamp = Date.now()  ;
+var version = '1.2.1';
+var timeStamp = Date.now();
+var coreID = 'leocaseiro.github.io' + version;
+var cacheIDs = [coreID];
 
 self.addEventListener('install', function(e) {
   e.waitUntil(
-    caches.open('leocaseiro.github.io' + version).then(function(cache) {
+    caches.open(coreID).then(function(cache) {
       return cache.addAll([
         '/GrooveScribe/?timestamp=' + timeStamp,
         '/GrooveScribe/index.html?timestamp=' + timeStamp,
