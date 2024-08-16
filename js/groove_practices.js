@@ -32,7 +32,7 @@ function GroovePractices() {
 
 	root.init = () => {
 		// hide save button if not iframe from targetOrigin
-		if (root.isIframeLoadedInsideTargetOrigin) {
+		if (root.isIframeLoadedInsideTargetOrigin()) {
 			root.hideSaveButton();
 		}
 	}
