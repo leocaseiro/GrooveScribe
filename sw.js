@@ -1,9 +1,9 @@
-var version = '1.1.0';
-var timeStamp = Date.now();
+var version = '1.2.0';
+var timeStamp = Date.now()  ;
 
 self.addEventListener('install', function(e) {
   e.waitUntil(
-    caches.open('leocaseiro.github.io').then(function(cache) {
+    caches.open('leocaseiro.github.io' + version).then(function(cache) {
       return cache.addAll([
         '/GrooveScribe/?timestamp=' + timeStamp,
         '/GrooveScribe/index.html?timestamp=' + timeStamp,
@@ -17,6 +17,7 @@ self.addEventListener('install', function(e) {
         '/GrooveScribe/images/gscribe-icon-96.png?timestamp=' + timeStamp,
         '/GrooveScribe/js/abc2svg-1.js?timestamp=' + timeStamp,
         '/GrooveScribe/js/groove_utils.js?timestamp=' + timeStamp,
+        '/GrooveScribe/js/groove_practices.js?timestamp=' + timeStamp,
         '/GrooveScribe/js/groove_writer.js?timestamp=' + timeStamp,
         '/GrooveScribe/js/grooves.js?timestamp=' + timeStamp,
         '/GrooveScribe/js/jsmidgen.js?timestamp=' + timeStamp,
@@ -41,8 +42,16 @@ self.addEventListener('install', function(e) {
   )
 });
 
-self.addEventListener('activate', function(event) {
-  event.waitUntil(self.clients.claim());
+self.addEventListener('activate', function (event) {
+	event.waitUntil(caches.keys().then(function (keys) {
+		return Promise.all(keys.filter(function (key) {
+			return !cacheIDs.includes(key);
+		}).map(function (key) {
+			return caches.delete(key);
+		}));
+	}).then(function () {
+		return self.clients.claim();
+	}));
 });
 
 self.addEventListener('fetch', function(event) {
