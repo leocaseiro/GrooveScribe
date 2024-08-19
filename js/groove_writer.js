@@ -35,6 +35,7 @@ function GrooveWriter() {
 	var root = this;
 
 	root.myGrooveUtils = new GrooveUtils();
+	root.rhythmGame = new RhythmGame();
 
 	var class_undo_stack = [];
 	var class_redo_stack = [];
@@ -3378,6 +3379,11 @@ function GrooveWriter() {
 	// public function.
 	// This function initializes the data for the groove Scribe web page
 	root.runsOnPageLoad = function () {
+		root.rhythmGame.onLoad();
+
+		root.myGrooveUtils.playEventCallback = function (myroot, playStarting) {
+			root.rhythmGame.resetScore();
+		}
 
 		root.setupWriterHotKeys(); // there are other hot keys in GrooveUtils for the midi player
 
@@ -3425,7 +3431,15 @@ function GrooveWriter() {
 				root.metronomeAutoSpeedUpTempoUpdate();
 			}
 
+			if (note_type == "clear") {
+				root.rhythmGame.stopGame();
+			}
+
 			hilight_note(note_type, percent_complete);
+		};
+
+		root.myGrooveUtils.midiEventCallbacks.onMIDICallback = function (myroot, data) {
+			root.rhythmGame.onMidiPlayNote(myroot, data);
 		};
 
 		root.myGrooveUtils.oneTimeInitializeMidi();

@@ -59,6 +59,7 @@
 		<script src="js/groove_writer.js"></script>
 		<script src="js/groove_utils.js"></script>
 		<script src="js/grooves.js"></script>
+		<script src="js/rhythm_game.js"></script>
 
 		<script type="text/javascript">
 			/*jslint browser:true evil:true on:true */
@@ -187,6 +188,15 @@
 					<span class=" grooveDB_hidden pageBottomButton" id="printButton" onclick="myGrooveWriter.printMusic();"><span class="bottomButtonIcon"><i class="fa fa-print fa-2x"></i></span><span class="bottomButtonLabel">PRINT</span></span>
 					<span class=" grooveDB_hidden pageBottomButton" id="saveGroovePracticeButton" onclick="myGroovePractices.saveGroovePractice();"><span class="bottomButtonIcon"><i class="fa fa-save fa-2x"></i></span><span class="bottomButtonLabel">SAVE</span></span>
 					<span class=" grooveDB_hidden pageBottomButton" id="shareSaveButton" onclick="event.preventDefault(); myGrooveWriter.show_FullURLPopup();"><span class="bottomButtonIcon"><i class="fa fa-share fa-2x"></i></span><span class="bottomButtonLabel">SHARE</span></span>
+					<span class=" grooveDB_hidden pageBottomButton" id="hitSaveButton" onclick="event.preventDefault(); myGrooveWriter.rhythmGame.onHit();"><span class="bottomButtonIcon"><i class="fa fa-play fa-2x"></i></span><span class="bottomButtonLabel">HIT</span></span>
+				</div>
+
+				<div id="score" style="color: var(--highlight-color)">
+					<span>Perfect: <span class="totalTimeNum" id="perfect-count">0</span></span>
+					<span>Early: <span class="totalTimeNum" id="early-count">0</span></span>
+					<span>Late: <span class="totalTimeNum" id="late-count">0</span></span>
+					<span>Missed: <span class="totalTimeNum" id="missed-count">0</span></span>
+					<span>Misplaced: <span class="totalTimeNum" id="misplaced-count">0</span></span>
 				</div>
 
 				<div id="midiTextOutput">

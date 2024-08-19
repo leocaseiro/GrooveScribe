@@ -140,7 +140,7 @@ function GrooveUtils() {
 	root.isLegendVisable = false;
 
 	// integration with third party components
-	root.noteCallback = null;  //function triggered when a note is played
+	root.noteCallback = null; //function triggered when a note is played
 	root.playEventCallback = null;  //triggered when the play button is pressed
 	root.repeatCallback = null;  //triggered when a groove is going to be repeated
 	root.tempoChangeCallback = null;  //triggered when the tempo changes.  ARG1 is the new Tempo integer (needs to be very fast, it can get called a lot of times from the slider)
@@ -2324,8 +2324,8 @@ function GrooveUtils() {
 				document.getElementById("midiRepeatImage" + root.grooveUtilsUniqueIndex).src = root.getMidiImageLocation() + "grey_repeat.png";
 		};
 		this.percentProgress = function (root, percent) {};
+		this.onMIDICallback = function (root, data) {};
 		this.notePlaying = function (root, note_type, note_position) {};
-
 		this.midiInitialized = function (root) {
 			var icon = document.getElementById("midiPlayImage" + root.grooveUtilsUniqueIndex);
 			if (icon)
@@ -2946,6 +2946,8 @@ function GrooveUtils() {
 	// This is different from the callbacks that we use for the midi code in this library to
 	// do events.   (Double chaining)
 	function ourMIDICallback(data) {
+		// we want to be the first one to get the callback
+		root.midiEventCallbacks.onMIDICallback(root.midiEventCallbacks.classRoot, data);
 		var percentComplete = (data.now / data.end);
 		root.midiEventCallbacks.percentProgress(root.midiEventCallbacks.classRoot, percentComplete * 100);
 
@@ -2955,13 +2957,14 @@ function GrooveUtils() {
 		}
 
 		if (data.now < 16) {
+			console.log('start');
+			root.midiEventCallbacks.notePlaying(root.midiEventCallbacks.classRoot, "start", 1);
 			// this is considered the start.   It doesn't come in at zero for some reason
 			// The second note should always be at least 16 ms behind the first
 			//class_midi_note_num = 0;
 			root.lastMidiTimeUpdate = -1;
 		}
 		if (data.now == data.end) {
-
 			// at the end of a song
 			root.midiEventCallbacks.notePlaying(root.midiEventCallbacks.classRoot, "complete", 1);
 
@@ -3017,7 +3020,7 @@ function GrooveUtils() {
 				root.midiEventCallbacks.notePlaying(root.midiEventCallbacks.classRoot, note_type, percentComplete);
 				root.highlightNoteInABCSVGFromPercentComplete(percentComplete);
 				if (root.noteCallback) {
-					root.noteCallback(note_type);
+					root.noteCallback(note_type, data);
 				}
 			}
 		}
