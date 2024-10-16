@@ -4,6 +4,7 @@ function RhythmGame() {
 
     // Game variables
     let notes = [];
+    let loops = 0;
     let score = {
         perfect: 0,
         early: 0,
@@ -52,11 +53,12 @@ function RhythmGame() {
         };
     }
 
-    const createNote = (drum, midiNumber, time) => {
+    const createNote = (drum, midiNumber, time, loop) => {
         const note = {
             drum: drum,
             midiNumber: midiNumber,
-            creationTime: time
+            creationTime: time,
+            loop: loop
         };
         notes.push(note);
     }
@@ -71,6 +73,7 @@ function RhythmGame() {
 
     const checkHit = (midiNumber, hitTime) => {
         if (!isGameRunning) return;
+        console.log('notes', notes);
         const hitNote = notes.find(note => note.midiNumber === midiNumber && Math.abs(note.creationTime - hitTime) <= HIT_WINDOW);
         if (hitNote) {
             const timeDiff = Math.abs(hitTime - hitNote.creationTime);
@@ -103,6 +106,12 @@ function RhythmGame() {
             score[key] = 0;
             updateScoreDisplay(key);
         }
+        notes = [];
+        loops = 0;
+    }
+
+    const onLoop = () => {
+        loops++;
     }
 
     const updateScoreDisplay = (type) => {
@@ -121,7 +130,7 @@ function RhythmGame() {
             const drum = drumMapping[data.note];
             if (drum) {
                 if (data.message === 144 && data.velocity > 0) { // Note on
-                    createNote(drum, data.note, currentTime);
+                    createNote(drum, data.note, currentTime, loops);
                 }
             }
         }
@@ -134,6 +143,7 @@ function RhythmGame() {
     return {
         resetScore: resetScore,
         stopGame: stopGame,
+        onLoop: onLoop,
         onHit: onHit,
         onMidiPlayNote: onMidiPlayNote,
         onLoad: onLoad,

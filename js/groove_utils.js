@@ -2326,6 +2326,7 @@ function GrooveUtils() {
 		this.percentProgress = function (root, percent) {};
 		this.onMIDICallback = function (root, data) {};
 		this.notePlaying = function (root, note_type, note_position) {};
+		this.onLoop = function (root) {};
 		this.midiInitialized = function (root) {
 			var icon = document.getElementById("midiPlayImage" + root.grooveUtilsUniqueIndex);
 			if (icon)
@@ -2971,6 +2972,7 @@ function GrooveUtils() {
 			if (root.shouldMIDIRepeat) {
 
 				global_total_midi_repeats++;
+				root.midiEventCallbacks.onLoop(root.midiEventCallbacks.classRoot);
 
 				// regenerate the MIDI if the data needs refreshing or the OffsetClick is rotating every time
 				// advanceMetronomeOptionsOffsetClickStartRotation will return false if not rotating

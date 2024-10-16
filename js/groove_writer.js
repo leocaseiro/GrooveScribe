@@ -3438,6 +3438,11 @@ function GrooveWriter() {
 			hilight_note(note_type, percent_complete);
 		};
 
+		root.myGrooveUtils.midiEventCallbacks.onLoop = function (myroot) {
+			root.rhythmGame.onLoop();
+		}
+
+
 		root.myGrooveUtils.midiEventCallbacks.onMIDICallback = function (myroot, data) {
 			root.rhythmGame.onMidiPlayNote(myroot, data);
 		};
