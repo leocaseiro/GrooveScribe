@@ -933,7 +933,7 @@
 		font-family: monospace;
 		font-size: 14px;
 	}
-	#fullURLPopup, #metronomeAutoSpeedupConfiguration, #timeSigPopup {
+	#fullURLPopup, #metronomeAutoSpeedupConfiguration, #timeSigPopup, #midiSettingsPopup {
 		/visibility: hidden;
 		display: none;
 		position:absolute; left:300px; top:250px; z-index:999;
@@ -943,7 +943,10 @@
 		border: solid 2px #999;
 		border-radius: 5px;
 	}
-	#timeSigPopup {
+	#midiSettingsPopup #js-note-list {
+		font-size: .6em;
+	}
+	#timeSigPopup, #midiSettingsPopup {
 		font-size: 24px;
 	}
 	#timeSigPopupBeta {
@@ -960,7 +963,7 @@
 	#timeSigPopupOptions {
 		text-align: center;
 	}
-	#timeSigPopupTimeSigTop, #timeSigPopupTimeSigBottom {
+	#timeSigPopupTimeSigTop, #timeSigPopupTimeSigBottom, #midiSettingsSelect {
 		font-size: 24px;
 		font-weight: 500;
 		color: #666;
@@ -968,6 +971,9 @@
 		vertical-align: top;
 		padding-left: 20px;
 		width: 80px;
+	}
+	#midiSettingsSelect {
+		width: auto;
 	}
 	#timeSigPopupSlash {
 		font-size: 24px;
@@ -982,7 +988,7 @@
 		border-radius: 5px;
 		padding: 5px 10px;
 	}
-	#timeSigPopupOK {
+	#timeSigPopupOK, #midiSettingsOK {
 		font-size: 16px;
 		font-weight: 500;
 		background: var(--highlight-color);
@@ -991,7 +997,7 @@
 		border-radius: 5px;
 		padding: 5px 10px;
 	}
-	#timeSigPopupButtons {
+	#timeSigPopupButtons, #midiSettingsPopup {
 		margin-top: 30px;
 		text-align: center;
 	}

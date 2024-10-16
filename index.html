@@ -59,6 +59,7 @@
 		<script src="js/groove_writer.js"></script>
 		<script src="js/groove_utils.js"></script>
 		<script src="js/grooves.js"></script>
+		<script src="js/midi_input.js"></script>
 
 		<script type="text/javascript">
 			/*jslint browser:true evil:true on:true */
@@ -74,6 +75,18 @@
 			var myGroovePractices = new GroovePractices();
 			document.addEventListener('DOMContentLoaded', () => {
 				myGroovePractices.init();
+			});
+		</script>
+		<script type="text/javascript">
+			let myMidiInput = new MidiInput();
+			document.addEventListener('DOMContentLoaded', async () => {
+				try {
+					await myMidiInput.init();
+					console.log("MIDI Input initialized successfully.");
+					// You can add additional logic here that depends on MIDI being initialized
+				} catch (error) {
+					console.error("Failed to initialize MIDI:", error);
+				}
 			});
 		</script>
 
@@ -107,6 +120,8 @@
 
 					<span class="left-button edit-block" id="undoButton" onclick="myGrooveWriter.undoCommand();"><span class="left-button-content"><i class="fa fa-undo"></i>&nbsp;&nbsp;Undo</span></span>
 					<span class="left-button edit-block" id="redoButton" onclick="myGrooveWriter.redoCommand();"><span class="left-button-content"><i class="fa fa-repeat"></i>&nbsp;&nbsp;Redo</span></span>
+
+					<span class="left-button subdivision edit-block" id="midiButton" onclick="myMidiInput.midiSettingsOpen();"><span class="left-button-content">MIDI</span></span>
 				</span>
 
 			</div>
@@ -458,8 +473,17 @@
 			</select>
 			</div>
 			<div id="timeSigPopupButtons">
-			<button id="timeSigPopupCancel" onclick="myGrooveWriter.timeSigPopupClose('cancel');">Cancel</button>
-			<button id="timeSigPopupOK" onclick="myGrooveWriter.timeSigPopupClose('ok');">Done</button>
+				<button id="timeSigPopupCancel" onclick="myGrooveWriter.timeSigPopupClose('cancel');">Cancel</button>
+				<button id="timeSigPopupOK" onclick="myGrooveWriter.timeSigPopupClose('ok');">Done</button>
+			</div>
+		</div>
+
+		<div id="midiSettingsPopup" style="display:block">
+			<label for="midiSettingsSelect" id="midiSettingsSelectLabel">MIDI Input:</label>
+			<select id="midiSettingsSelect"></select>
+			<ul id="js-note-list"></ul>
+			<div id="midiSettingsButtons">
+				<button id="midiSettingsOK" onclick="myMidiInput.midiSettingsClose();">Done</button>
 			</div>
 		</div>
 

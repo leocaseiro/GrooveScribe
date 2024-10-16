@@ -3415,5 +3415,4 @@ function GrooveUtils() {
 		// enable or disable swing
 		root.swingEnabled(root.doesDivisionSupportSwing(division));
 	};
-
 } // end of class

@@ -1,0 +1,8 @@
+// .vscode/settings.json
+{
+    "liveServer.settings.https": {
+      "enable": true,
+      "cert": "/Users/lcaseiro/localhost-cert.pem",
+      "key": "/Users/lcaseiro/localhost-key.pem"
+    }
+  }
