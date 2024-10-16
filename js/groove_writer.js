@@ -2499,7 +2499,7 @@ function GrooveWriter() {
 		// just the first measure
 		var num_notes = get32NoteArrayFromClickableUI(Sticking_Array, HH_Array, Snare_Array, Kick_Array, Toms_Array, 0);
 		muteArrayFromClickableUI(Sticking_Array, HH_Array, Snare_Array, Kick_Array, Toms_Array, 0);
-
+console.log('num_notes', num_notes);
 		var midiFile = new Midi.File();
 		var midiTrack = new Midi.Track();
 		midiFile.addTrack(midiTrack);
@@ -2508,6 +2508,7 @@ function GrooveWriter() {
 		midiTrack.setInstrument(0, 0x13);
 
 		var swing_percentage = root.myGrooveUtils.getSwing() / 100;
+		console.log('midiFile', midiFile);
 
 		// all of the permutations use just the first measure
 		switch (class_permutation_type) {
@@ -2581,6 +2582,9 @@ function GrooveWriter() {
 				}
 				break;
 		}
+
+		console.log('midiFile2', midiFile);
+		console.log('>midiTrack', midiTrack);
 
 		var midi_url = "data:audio/midi;base64," + btoa(midiFile.toBytes());
 
@@ -3420,6 +3424,7 @@ function GrooveWriter() {
 				midiURL = createMidiUrlFromClickableUI("our_MIDI");
 				root.myGrooveUtils.midiResetNoteHasChanged();
 			}
+			console.log('midiURL', midiURL);
 			root.myGrooveUtils.loadMIDIFromURL(midiURL);
 			root.updateGrooveDBSource();
 		};

@@ -2382,6 +2382,8 @@ function GrooveUtils() {
 			midiTrack.addNoteOff(9, constant_OUR_MIDI_METRONOME_NORMAL, noteDelay);
 		}
 
+		console.log('midiTrack', midiTrack);
+
 		var midi_url = "data:audio/midi;base64," + btoa(midiFile.toBytes());
 
 		return midi_url;
@@ -2792,6 +2794,7 @@ function GrooveUtils() {
 	};
 
 	root.loadMIDIFromURL = function (midiURL) {
+		console.log("Loading MIDI from URL: ", midiURL);
 
 		MIDI.Player.timeWarp = 1; // speed the song is played back
 		MIDI.Player.BPM = root.getTempo();
