@@ -81,6 +81,10 @@ function GrooveWriter() {
 	var constant_snare_accent_on_color_hex = "#FFF";
 	var constant_snare_accent_on_color_rgb = "rgb(255, 255, 255)";
 
+    // rhythm game colors
+	var constant_note_right_color_rgb = 'rgb(0, 128, 0)'; // green
+	var constant_note_wrong_color_rgb = 'rgb(128, 0, 0)'; // red
+
 	// functions below
 
 	root.numberOfMeasures = function () {
@@ -275,10 +279,12 @@ function GrooveWriter() {
 		switch (mode) {
 			case "off":
 				document.getElementById("tom_circle" + tom_num + "-" + id).style.backgroundColor = constant_note_off_color_hex;
+				document.getElementById("tom_circle" + tom_num + "-" + id).classList.remove("note-selected--background");
 				document.getElementById("tom_circle" + tom_num + "-" + id).style.borderColor = constant_note_border_color_hex;
 				break;
 			case "normal":
 				document.getElementById("tom_circle" + tom_num + "-" + id).style.backgroundColor = constant_note_on_color_hex;
+				document.getElementById("tom_circle" + tom_num + "-" + id).classList.add("note-selected--background");
 				document.getElementById("tom_circle" + tom_num + "-" + id).style.borderColor = constant_note_border_color_hex;
 				if (make_sound)
 					switch (tom_num) {
@@ -368,29 +374,37 @@ function GrooveWriter() {
 
 		// hide everything optional
 		document.getElementById("kick_circle" + id).style.backgroundColor = constant_note_hidden_color_rgb;
+		document.getElementById("kick_circle" + id).classList.remove("note-selected--background");
 		document.getElementById("kick_splash" + id).style.color = constant_note_hidden_color_rgb;
+		document.getElementById("kick_splash" + id).classList.remove("note-selected");
 
 		// turn stuff on conditionally
 		switch (mode) {
 			case "off":
 				document.getElementById("kick_circle" + id).style.backgroundColor = constant_note_off_color_hex;
+				document.getElementById("kick_circle" + id).classList.remove("note-selected--background");
 				document.getElementById("kick_circle" + id).style.borderColor = constant_note_border_color_hex;
 				break;
-			case "normal":
-				document.getElementById("kick_circle" + id).style.backgroundColor = constant_note_on_color_hex;
+				case "normal":
+					document.getElementById("kick_circle" + id).style.backgroundColor = constant_note_on_color_hex;
+					document.getElementById("kick_circle" + id).classList.add("note-selected--background");
 				document.getElementById("kick_circle" + id).style.borderColor = constant_note_border_color_hex;
 				if (make_sound)
 					play_single_note_for_note_setting(constant_OUR_MIDI_KICK_NORMAL);
 				break;
 			case "splash":
 				document.getElementById("kick_splash" + id).style.color = constant_note_on_color_hex;
+				document.getElementById("kick_splash" + id).classList.add("note-selected");
 				document.getElementById("kick_circle" + id).style.borderColor = constant_note_hidden_color_rgb;
+				document.getElementById("kick_circle" + id).classList.add("note-selected");
 				if (make_sound)
 					play_single_note_for_note_setting(constant_OUR_MIDI_HIHAT_FOOT);
 				break;
-			case "kick_and_splash":
-				document.getElementById("kick_circle" + id).style.backgroundColor = constant_note_on_color_hex;
-				document.getElementById("kick_splash" + id).style.color = constant_note_on_color_hex;
+				case "kick_and_splash":
+					document.getElementById("kick_circle" + id).style.backgroundColor = constant_note_on_color_hex;
+					document.getElementById("kick_circle" + id).classList.add("note-selected--background");
+					document.getElementById("kick_splash" + id).style.color = constant_note_on_color_hex;
+					document.getElementById("kick_splash" + id).classList.add("note-selected");
 				if (make_sound)
 					play_single_note_for_note_setting(constant_OUR_MIDI_HIHAT_FOOT);
 				if (make_sound)
@@ -407,54 +421,70 @@ function GrooveWriter() {
 		// hide everything optional
 		document.getElementById("snare_circle" + id).style.backgroundColor = constant_note_hidden_color_rgb;
 		document.getElementById("snare_circle" + id).style.borderColor = constant_note_hidden_color_rgb;
+		document.getElementById("snare_circle" + id).classList.remove("note-selected--background");
 		document.getElementById("snare_ghost" + id).style.color = constant_note_hidden_color_rgb;
+		document.getElementById("snare_ghost" + id).classList.remove("note-selected");
 		document.getElementById("snare_accent" + id).style.color = constant_note_hidden_color_rgb;
+		document.getElementById("snare_accent" + id).classList.remove("note-selected");
 		document.getElementById("snare_xstick" + id).style.color = constant_note_hidden_color_rgb;
+		document.getElementById("snare_xstick" + id).classList.remove("note-selected");
 		document.getElementById("snare_buzz" + id).style.color = constant_note_hidden_color_rgb;
+		document.getElementById("snare_buzz" + id).classList.remove("note-selected");
 		document.getElementById("snare_flam" + id).style.color = constant_note_hidden_color_rgb;
+		document.getElementById("snare_flam" + id).classList.remove("note-selected");
 		document.getElementById("snare_drag" + id).style.color = constant_note_hidden_color_rgb;
+		document.getElementById("snare_drag" + id).classList.remove("note-selected");
 
 		// turn stuff on conditionally
 		switch (mode) {
 			case "off":
 				document.getElementById("snare_circle" + id).style.backgroundColor = constant_note_off_color_hex;
+				document.getElementById("snare_circle" + id).classList.remove("note-selected--background");
 				document.getElementById("snare_circle" + id).style.borderColor = constant_note_border_color_hex;
 				break;
-			case "normal":
-				document.getElementById("snare_circle" + id).style.backgroundColor = constant_note_on_color_hex;
-				document.getElementById("snare_circle" + id).style.borderColor = constant_note_border_color_hex;
+				case "normal":
+					document.getElementById("snare_circle" + id).style.backgroundColor = constant_note_on_color_hex;
+					document.getElementById("snare_circle" + id).classList.add("note-selected--background");
+					document.getElementById("snare_circle" + id).style.borderColor = constant_note_border_color_hex;
 				if (make_sound)
 					play_single_note_for_note_setting(constant_OUR_MIDI_SNARE_NORMAL);
 				break;
 			case "flam":
 				document.getElementById("snare_flam" + id).style.color = constant_note_on_color_hex;
+				document.getElementById("snare_flam" + id).classList.add("note-selected");
 				if (make_sound)
 					play_single_note_for_note_setting(constant_OUR_MIDI_SNARE_FLAM);
 				break;
 			case "drag":
 				document.getElementById("snare_drag" + id).style.color = constant_note_on_color_hex;
+				document.getElementById("snare_drag" + id).classList.add("note-selected");
 				if (make_sound)
 					play_single_note_for_note_setting(constant_OUR_MIDI_SNARE_DRAG);
 				break;
 			case "ghost":
 				document.getElementById("snare_ghost" + id).style.color = constant_note_on_color_hex;
+				document.getElementById("snare_ghost" + id).classList.add("note-selected");
 				if (make_sound)
 					play_single_note_for_note_setting(constant_OUR_MIDI_SNARE_GHOST);
 				break;
 			case "accent":
 				document.getElementById("snare_circle" + id).style.backgroundColor = constant_note_on_color_hex;
+				document.getElementById("snare_circle" + id).classList.add("note-selected--background");
 				document.getElementById("snare_circle" + id).style.borderColor = constant_note_border_color_hex;
 				document.getElementById("snare_accent" + id).style.color = constant_snare_accent_on_color_hex;
+				document.getElementById("snare_circle" + id).classList.add("note-selected--background");
 				if (make_sound)
 					play_single_note_for_note_setting(constant_OUR_MIDI_SNARE_ACCENT);
 				break;
 			case "xstick":
 				document.getElementById("snare_xstick" + id).style.color = constant_note_on_color_hex;
+				document.getElementById("snare_xstick" + id).classList.add("note-selected");
 				if (make_sound)
 					play_single_note_for_note_setting(constant_OUR_MIDI_SNARE_XSTICK);
 				break;
 			case "buzz":
 				document.getElementById("snare_buzz" + id).style.color = constant_note_on_color_hex;
+				document.getElementById("snare_buzz" + id).classList.add("note-selected");
 				if (make_sound)
 					play_single_note_for_note_setting(constant_OUR_MIDI_SNARE_BUZZ);
 				break;
@@ -560,79 +590,107 @@ function GrooveWriter() {
 	// TODO: refactor this using a lookup table of constants
 	function set_hh_state(id, mode, make_sound) {
 
+		// use constant_note_right_color_rgb or constant_note_wrong_color_rgb
+
 		// hide everything optional
 		document.getElementById("hh_cross" + id).style.color = constant_note_hidden_color_rgb;
+		document.getElementById("hh_cross" + id).classList.remove("note-selected");
 		document.getElementById("hh_ride" + id).style.color = constant_note_hidden_color_rgb;
+		document.getElementById("hh_ride" + id).classList.remove("note-selected");
 		document.getElementById("hh_ride_bell" + id).style.color = constant_note_hidden_color_rgb;
+		document.getElementById("hh_ride_bell" + id).classList.remove("note-selected");
 		document.getElementById("hh_cow_bell" + id).style.color = constant_note_hidden_color_rgb;
+		document.getElementById("hh_cow_bell" + id).classList.remove("note-selected");
 		document.getElementById("hh_crash" + id).style.color = constant_note_hidden_color_rgb;
+		document.getElementById("hh_crash" + id).classList.remove("note-selected");
 		document.getElementById("hh_stacker" + id).style.color = constant_note_hidden_color_rgb;
+		document.getElementById("hh_stacker" + id).classList.remove("note-selected");
 		document.getElementById("hh_metronome_normal" + id).style.color = constant_note_hidden_color_rgb;
+		document.getElementById("hh_metronome_normal" + id).classList.remove("note-selected");
 		document.getElementById("hh_metronome_accent" + id).style.color = constant_note_hidden_color_rgb;
+		document.getElementById("hh_metronome_accent" + id).classList.remove("note-selected");
 		document.getElementById("hh_open" + id).style.color = constant_note_hidden_color_rgb;
+		document.getElementById("hh_open" + id).classList.remove("note-selected");
 		document.getElementById("hh_close" + id).style.color = constant_note_hidden_color_rgb;
+		document.getElementById("hh_close" + id).classList.remove("note-selected");
 		document.getElementById("hh_accent" + id).style.color = constant_note_hidden_color_rgb;
+		document.getElementById("hh_accent" + id).classList.remove("note-selected");
 
 		// turn stuff on conditionally
 		switch (mode) {
 			case "off":
 				document.getElementById("hh_cross" + id).style.color = constant_hihat_note_off_color_hex;
+				document.getElementById("hh_cross" + id).classList.remove("note-selected");
 				break;
 			case "normal":
 				document.getElementById("hh_cross" + id).style.color = constant_note_on_color_hex;
+				document.getElementById("hh_cross" + id).classList.add("note-selected");
 				if (make_sound)
 					play_single_note_for_note_setting(constant_OUR_MIDI_HIHAT_NORMAL);
 				break;
 			case "ride":
 				document.getElementById("hh_ride" + id).style.color = constant_note_on_color_hex;
+				document.getElementById("hh_ride" + id).classList.add("note-selected");
 				if (make_sound)
 					play_single_note_for_note_setting(constant_OUR_MIDI_HIHAT_RIDE);
 				break;
 			case "ride_bell":
 				document.getElementById("hh_ride_bell" + id).style.color = constant_note_on_color_hex;
+				document.getElementById("hh_ride_bell" + id).classList.add("note-selected");
 				if (make_sound)
 					play_single_note_for_note_setting(constant_OUR_MIDI_HIHAT_RIDE_BELL);
 				break;
 			case "cow_bell":
 				document.getElementById("hh_cow_bell" + id).style.color = constant_note_on_color_hex;
+				document.getElementById("hh_cow_bell" + id).classList.add("note-selected");
 				if (make_sound)
 					play_single_note_for_note_setting(constant_OUR_MIDI_HIHAT_COW_BELL);
 				break;
 			case "crash":
 				document.getElementById("hh_crash" + id).style.color = constant_note_on_color_hex;
+				document.getElementById("hh_crash" + id).classList.add("note-selected");
 				if (make_sound)
 					play_single_note_for_note_setting(constant_OUR_MIDI_HIHAT_CRASH);
 				break;
 			case "stacker":
 				document.getElementById("hh_stacker" + id).style.color = constant_note_on_color_hex;
+				document.getElementById("hh_stacker" + id).classList.add("note-selected");
 				if (make_sound)
 					play_single_note_for_note_setting(constant_OUR_MIDI_HIHAT_STACKER);
 				break;
 			case "metronome_normal":
 				document.getElementById("hh_metronome_normal" + id).style.color = constant_note_on_color_hex;
+				document.getElementById("hh_metronome_normal" + id).classList.add("note-selected");
 				if (make_sound)
 					play_single_note_for_note_setting(constant_OUR_MIDI_HIHAT_METRONOME_NORMAL);
 				break;
 			case "metronome_accent":
 				document.getElementById("hh_metronome_accent" + id).style.color = constant_note_on_color_hex;
+				document.getElementById("hh_metronome_accent" + id).classList.add("note-selected");
 				if (make_sound)
 					play_single_note_for_note_setting(constant_OUR_MIDI_HIHAT_METRONOME_ACCENT);
 				break;
 			case "open":
 				document.getElementById("hh_cross" + id).style.color = constant_note_on_color_hex;
+				document.getElementById("hh_cross" + id).classList.add("note-selected");
 				document.getElementById("hh_open" + id).style.color = constant_note_on_color_hex;
+				document.getElementById("hh_open" + id).classList.add("note-selected");
 				if (make_sound)
 					play_single_note_for_note_setting(constant_OUR_MIDI_HIHAT_OPEN);
 				break;
 			case "close":
 				document.getElementById("hh_cross" + id).style.color = constant_note_on_color_hex;
+				document.getElementById("hh_cross" + id).classList.add("note-selected");
 				document.getElementById("hh_close" + id).style.color = constant_note_on_color_hex;
+				document.getElementById("hh_close" + id).classList.add("note-selected");
 				if (make_sound)
 					play_single_note_for_note_setting(constant_OUR_MIDI_HIHAT_NORMAL);
 				break;
 			case "accent":
 				document.getElementById("hh_cross" + id).style.color = constant_note_on_color_hex;
+				document.getElementById("hh_cross" + id).classList.add("note-selected");
 				document.getElementById("hh_accent" + id).style.color = constant_note_on_color_hex;
+				document.getElementById("hh_accent" + id).classList.add("note-selected");
 				if (make_sound)
 					play_single_note_for_note_setting(constant_OUR_MIDI_HIHAT_ACCENT);
 				break;
@@ -646,29 +704,39 @@ function GrooveWriter() {
 
 		// turn both off
 		document.getElementById("sticking_right" + id).style.color = constant_note_hidden_color_rgb;
+		document.getElementById("sticking_right" + id).classList.remove("note-selected");
 		document.getElementById("sticking_left" + id).style.color = constant_note_hidden_color_rgb;
+		document.getElementById("sticking_left" + id).classList.remove("note-selected");
 		document.getElementById("sticking_both" + id).style.color = constant_note_hidden_color_rgb;
+		document.getElementById("sticking_both" + id).classList.remove("note-selected");
 		document.getElementById("sticking_count" + id).style.color = constant_note_hidden_color_rgb;
+		document.getElementById("sticking_count" + id).classList.remove("note-selected");
 
 		switch (new_state) {
 			case "off":
 				// show them all greyed out.
 				document.getElementById("sticking_right" + id).style.color = constant_sticking_right_off_color_rgb;
+				document.getElementById("sticking_right" + id).classList.remove("note-selected");
 				document.getElementById("sticking_left" + id).style.color = constant_sticking_left_off_color_rgb;
+				document.getElementById("sticking_left" + id).classList.remove("note-selected");
 				break;
 			case "right":
 				document.getElementById("sticking_right" + id).style.color = constant_sticking_right_on_color_rgb;
+				document.getElementById("sticking_right" + id).classList.add("note-selected");
 				break;
 			case "left":
 				document.getElementById("sticking_left" + id).style.color = constant_sticking_left_on_color_rgb;
+				document.getElementById("sticking_left" + id).classList.add("note-selected");
 				break;
 			case "both":
 				document.getElementById("sticking_both" + id).style.color = constant_sticking_both_on_color_rgb;
+				document.getElementById("sticking_both" + id).classList.add("note-selected");
 				break;
 			case "count":
 				var count_state = root.myGrooveUtils.figure_out_sticking_count_for_index(id, class_notes_per_measure, class_time_division, class_note_value_per_measure);
 
 				document.getElementById("sticking_count" + id).style.color = constant_sticking_count_on_color_rgb;
+				document.getElementById("sticking_count" + id).classList.add("note-selected");
 				document.getElementById("sticking_count" + id).innerHTML = "" + count_state;
 				break;
 
@@ -829,15 +897,26 @@ function GrooveWriter() {
 	}
 
 	var class_cur_all_notes_highlight_id = false;
+	var previous_beat_highlighted = null;
 
 	function hilight_all_notes_on_same_beat(instrument, id) {
+		// console.log('>>> hilight_all_notes_on_same_beat', instrument, id, class_cur_all_notes_highlight_id);
+		// console.log('>>> previous_beat_highlighted', previous_beat_highlighted);
 
 		id = Math.floor(id);
 		if (id < 0 || id >= class_notes_per_measure * class_number_of_measures)
 			return;
 
-		if (class_cur_all_notes_highlight_id === id)
-			return; // already highligted
+
+		// not highligted
+		if (class_cur_all_notes_highlight_id !== id) {
+			// clear all previous highlights
+			const prev_notes = document.querySelectorAll(`[data="beat-${class_cur_all_notes_highlight_id}"]`);
+			prev_notes.forEach(el => el?.classList.remove("note-highlighted"));
+		}
+
+		const curr_notes = document.querySelectorAll(`[data="beat-${id}"].note-selected,[data="beat-${id}"].note-selected--background`);
+		curr_notes.forEach(el => el?.classList.add("note-highlighted"));
 
 		if (class_cur_all_notes_highlight_id !== false) {
 			// turn off old highlighting
@@ -850,9 +929,14 @@ function GrooveWriter() {
 		// turn this one on;
 		class_cur_all_notes_highlight_id = id;
 		document.getElementById("bg-highlight" + class_cur_all_notes_highlight_id).style.background = "rgba(50, 126, 173, 0.2)";
+		document.getElementById(instrument + id)?.classList.add("note-highlighted");
+		if (id !== previous_beat_highlighted) {
+			previous_beat_highlighted = id;
+		}
 	}
 
 	function hilight_note(instrument, percent_complete) {
+		// console.log(">> hilight_note[" + instrument + ", " + percent_complete + "]");
 
 		if (percent_complete < 0) {
 			clear_all_highlights("clear");
@@ -863,37 +947,54 @@ function GrooveWriter() {
 		if (class_permutation_type != "none")
 			percent_complete = (percent_complete * get_numberOfActivePermutationSections()) % 1.0;
 
+		// console.log('>>> MIDI', MIDI.Player.ctx);
+		// console.log('>>> MIDI', MIDI.Player.ctx.currentTime);
+		// console.log('>>> calc_notes_per_measure', root.myGrooveUtils.calc_notes_per_measure((usingTriplets() ? 48 : 32), class_num_beats_per_measure, class_note_value_per_measure) * class_number_of_measures);
+
+		// console.log('------');
+
 		var note_id_in_32 = Math.floor(percent_complete * root.myGrooveUtils.calc_notes_per_measure((usingTriplets() ? 48 : 32), class_num_beats_per_measure, class_note_value_per_measure) * class_number_of_measures);
+		// console.log('>>> note_id_in_32', note_id_in_32);
 		var real_note_id = (note_id_in_32 / root.myGrooveUtils.getNoteScaler(class_notes_per_measure, class_num_beats_per_measure, class_note_value_per_measure));
+		// console.log('>>> getNoteScaler', root.myGrooveUtils.getNoteScaler(class_notes_per_measure, class_num_beats_per_measure, class_note_value_per_measure));
+		// console.log('>>> real_note_id', real_note_id);
+
+		// >> HERE
 
 		//hilight_individual_note(instrument, id);
 		hilight_all_notes_on_same_beat(instrument, real_note_id);
 	}
 
 	function clear_all_highlights(instrument) {
+		document.querySelectorAll(".note-highlighted").forEach(el => el.classList.remove("note-highlighted"));
 
-		// now turn off  notes if necessary;
+		// now turn off notes if necessary;
 		if (class_cur_hh_highlight_id !== false) {
 			document.getElementById("hi-hat" + class_cur_hh_highlight_id).style.borderColor = "transparent";
 			class_cur_hh_highlight_id = false;
 		}
 		if (class_cur_tom1_highlight_id !== false) {
 			document.getElementById("tom1-" + class_cur_tom1_highlight_id).style.borderColor = "transparent";
+			document.getElementById("tom1-" + class_cur_tom1_highlight_id).style.borderColor = "transparent";
 			class_cur_tom1_highlight_id = false;
 		}
 		if (class_cur_tom2_highlight_id !== false) {
+			document.getElementById("tom2-" + class_cur_tom2_highlight_id).style.borderColor = "transparent";
 			document.getElementById("tom2-" + class_cur_tom2_highlight_id).style.borderColor = "transparent";
 			class_cur_tom2_highlight_id = false;
 		}
 		if (class_cur_tom4_highlight_id !== false) {
 			document.getElementById("tom4-" + class_cur_tom4_highlight_id).style.borderColor = "transparent";
+			document.getElementById("tom4-" + class_cur_tom4_highlight_id).style.borderColor = "transparent";
 			class_cur_tom4_highlight_id = false;
 		}
 		if (class_cur_snare_highlight_id !== false) {
 			document.getElementById("snare" + class_cur_snare_highlight_id).style.borderColor = "transparent";
+			document.getElementById("snare" + class_cur_snare_highlight_id).style.borderColor = "transparent";
 			class_cur_snare_highlight_id = false;
 		}
 		if (class_cur_kick_highlight_id !== false) {
+			document.getElementById("kick" + class_cur_kick_highlight_id).style.borderColor = "transparent";
 			document.getElementById("kick" + class_cur_kick_highlight_id).style.borderColor = "transparent";
 			class_cur_kick_highlight_id = false;
 		}
@@ -2581,6 +2682,9 @@ function GrooveWriter() {
 				break;
 		}
 
+		console.log('===> MF ', midiFile);
+		console.log('===> MT ', midiTrack);
+
 		var midi_url = "data:audio/midi;base64," + btoa(midiFile.toBytes());
 
 		return midi_url;
@@ -3419,6 +3523,8 @@ function GrooveWriter() {
 		};
 
 		root.myGrooveUtils.midiEventCallbacks.notePlaying = function (myroot, note_type, percent_complete) {
+			// console.log(">> notePlaying: " + myroot);
+			// console.log(">> notePlaying: " + note_type + " " + percent_complete);
 			if (note_type == "complete" && class_metronome_auto_speed_up_active) {
 				// reload with new tempo
 				root.myGrooveUtils.midiNoteHasChanged();
@@ -4393,18 +4499,18 @@ function GrooveWriter() {
 		for (i = indexStartForNotes; i < class_notes_per_measure + indexStartForNotes; i++) {
 
 			newHTML += ('\
-														<div id="hi-hat' + i + '" class="hi-hat" onClick="myGrooveWriter.noteLeftClick(event, \'hh\', ' + i + ')" oncontextmenu="event.preventDefault(); myGrooveWriter.noteRightClick(event, \'hh\', ' + i + ')" onmouseenter="myGrooveWriter.noteOnMouseEnter(event, \'hh\', ' + i + ')">\
-															<div class="hh_crash note_part"  id="hh_crash' + i + '"><i class="fa fa-asterisk"></i></div>\
-															<div class="hh_ride note_part"   id="hh_ride' + i + '"><i class="fa fa-dot-circle-o"></i></div>\
-															<div class="hh_ride_bell note_part"   id="hh_ride_bell' + i + '"><i class="fa fa-bell-o"></i></div>\
-															<div class="hh_cow_bell note_part"    id="hh_cow_bell' + i + '"><i class="fa fa-plus-square-o"></i></div>\
-															<div class="hh_stacker note_part"   id="hh_stacker' + i + '"><i class="fa fa-bars"></i></div>\
-															<div class="hh_metronome_normal note_part"   id="hh_metronome_normal' + i + '"><i class="fa fa-neuter"></i></div>\
-															<div class="hh_metronome_accent note_part"   id="hh_metronome_accent' + i + '"><i class="fa fa-map-pin"></i></div>\
-															<div class="hh_cross note_part"  id="hh_cross' + i + '"><i class="fa fa-times"></i></div>\
-															<div class="hh_open note_part"   id="hh_open' + i + '"><i class="fa fa-circle-o"></i></div>\
-															<div class="hh_close note_part"  id="hh_close' + i + '"><i class="fa fa-plus"></i></div>\
-															<div class="hh_accent note_part" id="hh_accent' + i + '"><i class="fa fa-angle-right"></i></div>\
+														<div id="hi-hat' + i + '" data="beat-' + i + '" class="hi-hat" onClick="myGrooveWriter.noteLeftClick(event, \'hh\', ' + i + ')" oncontextmenu="event.preventDefault(); myGrooveWriter.noteRightClick(event, \'hh\', ' + i + ')" onmouseenter="myGrooveWriter.noteOnMouseEnter(event, \'hh\', ' + i + ')">\
+															<div class="hh_crash note_part" data="beat-' + i + '" id="hh_crash' + i + '"><i class="fa fa-asterisk"></i></div>\
+															<div class="hh_ride note_part" data="beat-' + i + '" id="hh_ride' + i + '"><i class="fa fa-dot-circle-o"></i></div>\
+															<div class="hh_ride_bell note_part" data="beat-' + i + '" id="hh_ride_bell' + i + '"><i class="fa fa-bell-o"></i></div>\
+															<div class="hh_cow_bell note_part" data="beat-' + i + '"  id="hh_cow_bell' + i + '"><i class="fa fa-plus-square-o"></i></div>\
+															<div class="hh_stacker note_part" data="beat-' + i + '" id="hh_stacker' + i + '"><i class="fa fa-bars"></i></div>\
+															<div class="hh_metronome_normal note_part" data="beat-' + i + '" id="hh_metronome_normal' + i + '"><i class="fa fa-neuter"></i></div>\
+															<div class="hh_metronome_accent note_part" data="beat-' + i + '" id="hh_metronome_accent' + i + '"><i class="fa fa-map-pin"></i></div>\
+															<div class="hh_cross note_part" data="beat-' + i + '" id="hh_cross' + i + '"><i class="fa fa-times"></i></div>\
+															<div class="hh_open note_part" data="beat-' + i + '" id="hh_open' + i + '"><i class="fa fa-circle-o"></i></div>\
+															<div class="hh_close note_part" data="beat-' + i + '" id="hh_close' + i + '"><i class="fa fa-plus"></i></div>\
+															<div class="hh_accent note_part" data="beat-' + i + '" id="hh_accent' + i + '"><i class="fa fa-angle-right"></i></div>\
 														</div>\n\
 													');
 
@@ -4421,8 +4527,8 @@ function GrooveWriter() {
 											<div class="opening_note_space"> </div>');
 		for (i = indexStartForNotes; i < class_notes_per_measure + indexStartForNotes; i++) {
 			newHTML += ('\
-						<div id="tom1-' + i + '" class="tom" onClick="myGrooveWriter.noteLeftClick(event, \'tom1\', ' + i + ')" oncontextmenu="event.preventDefault(); myGrooveWriter.noteRightClick(event, \'tom1\', ' + i + ')" onmouseenter="myGrooveWriter.noteOnMouseEnter(event, \'tom1\', ' + i + ')">\
-							<div class="tom_circle note_part"  id="tom_circle1-' + i + '"></div>\
+						<div id="tom1-' + i + '" data="beat-' + i + '" class="tom tom1" onClick="myGrooveWriter.noteLeftClick(event, \'tom1\', ' + i + ')" oncontextmenu="event.preventDefault(); myGrooveWriter.noteRightClick(event, \'tom1\', ' + i + ')" onmouseenter="myGrooveWriter.noteOnMouseEnter(event, \'tom1\', ' + i + ')">\
+							<div class="tom_circle tom_circle1 note_part" data="beat-' + i + '" id="tom_circle1-' + i + '"></div>\
 						</div>\n\
 						');
 
@@ -4439,8 +4545,8 @@ function GrooveWriter() {
 											<div class="opening_note_space"> </div>');
 		for (i = indexStartForNotes; i < class_notes_per_measure + indexStartForNotes; i++) {
 			newHTML += ('\
-						<div id="tom2-' + i + '" class="tom" onClick="myGrooveWriter.noteLeftClick(event, \'tom2\', ' + i + ')" oncontextmenu="event.preventDefault(); myGrooveWriter.noteRightClick(event, \'tom2\', ' + i + ')" onmouseenter="myGrooveWriter.noteOnMouseEnter(event, \'tom2\', ' + i + ')">\
-							<div class="tom_circle note_part"  id="tom_circle2-' + i + '"></div>\
+						<div id="tom2-' + i + '" data="beat-' + i + '" class="tom tom2" onClick="myGrooveWriter.noteLeftClick(event, \'tom2\', ' + i + ')" oncontextmenu="event.preventDefault(); myGrooveWriter.noteRightClick(event, \'tom2\', ' + i + ')" onmouseenter="myGrooveWriter.noteOnMouseEnter(event, \'tom2\', ' + i + ')">\
+							<div class="tom_circle tom_circle2 note_part" data="beat-' + i + '" id="tom_circle2-' + i + '"></div>\
 						</div>\n\
 						');
 
@@ -4457,12 +4563,12 @@ function GrooveWriter() {
 											<div class="opening_note_space"> </div> ');
 		for (i = indexStartForNotes; i < class_notes_per_measure + indexStartForNotes; i++) {
 			newHTML += ('' +
-						'<div id="snare' + i + '" class="snare" onClick="myGrooveWriter.noteLeftClick(event, \'snare\', ' + i + ')" oncontextmenu="event.preventDefault(); myGrooveWriter.noteRightClick(event, \'snare\', ' + i + ')" onmouseenter="myGrooveWriter.noteOnMouseEnter(event, \'snare\', ' + i + ')">' +
-							'<div class="snare_ghost note_part"  id="snare_ghost' + i + '">(<i class="fa fa-circle dot_in_snare_ghost_note"></i>)</div>' +
-							'<div class="snare_circle note_part" id="snare_circle' + i + '"></div>' +
-							'<div class="snare_xstick note_part" id="snare_xstick' + i + '"><i class="fa fa-times"></i></div>' +
-							'<div class="snare_buzz note_part" id="snare_buzz' + i + '"><i class="fa fa-bars"></i></div>' +
-							'<div class="snare_flam note_part" id="snare_flam' + i + '"><i class="fa ">' +
+						'<div id="snare' + i + '" data="beat-' + i + '" class="snare" onClick="myGrooveWriter.noteLeftClick(event, \'snare\', ' + i + ')" oncontextmenu="event.preventDefault(); myGrooveWriter.noteRightClick(event, \'snare\', ' + i + ')" onmouseenter="myGrooveWriter.noteOnMouseEnter(event, \'snare\', ' + i + ')">' +
+							'<div class="snare_ghost note_part" data="beat-' + i + '" id="snare_ghost' + i + '">(<i class="fa fa-circle dot_in_snare_ghost_note"></i>)</div>' +
+							'<div class="snare_circle note_part" data="beat-' + i + '" id="snare_circle' + i + '"></div>' +
+							'<div class="snare_xstick note_part" data="beat-' + i + '" id="snare_xstick' + i + '"><i class="fa fa-times"></i></div>' +
+							'<div class="snare_buzz note_part" data="beat-' + i + '" id="snare_buzz' + i + '"><i class="fa fa-bars"></i></div>' +
+							'<div class="snare_flam note_part" data="beat-' + i + '" id="snare_flam' + i + '"><i class="fa ">' +
 								'<svg xmlns="http://www.w3.org/2000/svg" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" width="30" height="30">' +
 								'	<style type="text/css">' +
 								'		.flam_fill {fill: currentColor}' +
@@ -4480,7 +4586,7 @@ function GrooveWriter() {
 								'	</g>' +
 								'</svg>' +
 							'</i></div>' +
-							'<div class="snare_drag note_part" id="snare_drag' + i + '"><i class="fa ">' +
+							'<div class="snare_drag note_part" data="beat-' + i + '" id="snare_drag' + i + '"><i class="fa ">' +
 							'<svg xmlns="http://www.w3.org/2000/svg" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" width="30" height="30">' +
 							'	<style type="text/css">' +
 							'		.drag_fill {fill: currentColor}' +
@@ -4503,7 +4609,7 @@ function GrooveWriter() {
 							'	</g>' +
 							'</svg>' +
 							'</i></div>' +
-							'<div class="snare_accent note_part" id="snare_accent' + i + '">' +
+							'<div class="snare_accent note_part" data="beat-' + i + '" id="snare_accent' + i + '">' +
 							'  <i class="fa fa-chevron-right"></i>' +
 							'</div>' +
 						'</div> \n');
@@ -4523,8 +4629,8 @@ function GrooveWriter() {
 											<div class="opening_note_space"> </div>');
 		for (i = indexStartForNotes; i < class_notes_per_measure + indexStartForNotes; i++) {
 			newHTML += ('\
-						<div id="tom4-' + i + '" class="tom" onClick="myGrooveWriter.noteLeftClick(event, \'tom4\', ' + i + ')" oncontextmenu="event.preventDefault(); myGrooveWriter.noteRightClick(event, \'tom4\', ' + i + ')" onmouseenter="myGrooveWriter.noteOnMouseEnter(event, \'tom4\', ' + i + ')">\
-							<div class="tom_circle note_part"  id="tom_circle4-' + i + '"></div>\
+						<div id="tom4-' + i + '" data="beat-' + i + '" class="tom tom4" onClick="myGrooveWriter.noteLeftClick(event, \'tom4\', ' + i + ')" oncontextmenu="event.preventDefault(); myGrooveWriter.noteRightClick(event, \'tom4\', ' + i + ')" onmouseenter="myGrooveWriter.noteOnMouseEnter(event, \'tom4\', ' + i + ')">\
+							<div class="tom_circle tom_circle4 note_part" data="beat-' + i + '" id="tom_circle4-' + i + '"></div>\
 						</div>\n\
 						');
 
@@ -4542,9 +4648,9 @@ function GrooveWriter() {
 											<div class="opening_note_space"> </div> ');
 		for (var j = indexStartForNotes; j < class_notes_per_measure + indexStartForNotes; j++) {
 			newHTML += ('\
-														<div id="kick' + j + '" class="kick" onClick="myGrooveWriter.noteLeftClick(event, \'kick\', ' + j + ')" oncontextmenu="event.preventDefault(); myGrooveWriter.noteRightClick(event, \'kick\', ' + j + ')" onmouseenter="myGrooveWriter.noteOnMouseEnter(event, \'kick\', ' + j + ')">\
-														<div class="kick_splash note_part" id="kick_splash' + j + '"><i class="fa fa-times"></i></div>\
-														<div class="kick_circle note_part" id="kick_circle' + j + '"></div>\
+														<div id="kick' + j + '" data="beat-' + j + '" class="kick" onClick="myGrooveWriter.noteLeftClick(event, \'kick\', ' + j + ')" oncontextmenu="event.preventDefault(); myGrooveWriter.noteRightClick(event, \'kick\', ' + j + ')" onmouseenter="myGrooveWriter.noteOnMouseEnter(event, \'kick\', ' + j + ')">\
+														<div class="kick_splash note_part" data="beat-' + i + '" id="kick_splash' + j + '"><i class="fa fa-times"></i></div>\
+														<div class="kick_circle note_part" data="beat-' + i + '" id="kick_circle' + j + '"></div>\
 														</div> \n\
 													');
 

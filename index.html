@@ -60,6 +60,7 @@
 		<script src="js/groove_utils.js"></script>
 		<script src="js/grooves.js"></script>
 		<script src="js/midi_input.js"></script>
+		<script src="js/rythm_game.js"></script>
 
 		<script type="text/javascript">
 			/*jslint browser:true evil:true on:true */
@@ -89,6 +90,9 @@
 				}
 			});
 		</script>
+		<script type="text/javascript">
+			let myRythmGame = new RythmGame(myGrooveWriter.myGrooveUtils);
+		</script>
 
     </head>
     <body>
@@ -98,6 +102,7 @@
 			<div id="LeftHandNav">
 				<span id="divisionButtonContainer">
 					<span id="logoInSubdivision" class="left-button-content"><img src="images/GScribe_Logo_lone_g.svg"></span>
+					<span class="left-button edit-block" id="hihatHitTest" onclick="myRythmGame.hihatHit();"><span class="left-button-content"><span><span id="timeSigLabel" class="buttonFraction"></span><span>HI-HAT</span></span></span></span>
 					<span class="left-button edit-block" id="timeLabel" onclick="myGrooveWriter.timeSigPopupOpen();"><span class="left-button-content"><span><span id="timeSigLabel" class="buttonFraction"><sup>4</sup>/<sub>4</sub></span><span id="timeSubLabel">TIME</span></span></span></span>
 					<span class="left-button subdivision edit-block" id="subdivision_8ths"  onclick="myGrooveWriter.changeDivision(8);"><span class="left-button-content"><span><span class="buttonFraction"><sup>1</sup>/<sub>8</sub></span>NOTES</span></span></span>
 					<span class="left-button subdivision edit-block" id="subdivision_16ths" onclick="myGrooveWriter.changeDivision(16);"><span class="left-button-content"><span><span class="buttonFraction"><sup>1</sup>/<sub>16</sub></span>NOTES</span></span></span>

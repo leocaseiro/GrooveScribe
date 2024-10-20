@@ -503,6 +503,26 @@
 		margin-right: 2px;
 		margin-left: 2px;
 	}
+
+	/* .note-selected { */
+	.note-hit .note-selected {
+		color: #FF7F50 !important;
+	}
+
+	.note-hit .note-selected--background, .note-hit.note-selected--background {
+		background-color: #FF7F50 !important;
+	}
+
+	.note-highlighted {
+		background-color: purple !important;
+	}
+
+	.hh_cross.note_part.hit {
+		color: #00ff00;
+	}
+	.hh_cross.note_part.wrong {
+		color: #ff0000;
+	}
 	.tom {
 		display: inline-block;
 		position: relative;

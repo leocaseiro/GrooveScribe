@@ -32,6 +32,8 @@ if (document.currentScript)
 	global_grooveUtilsScriptSrc = document.currentScript.src;
 var global_midiInitialized = false;
 
+var global_game_played_notes = [];
+
 // global constants
 var constant_MAX_MEASURES = 10;
 var constant_DEFAULT_TEMPO = 80;
@@ -2295,6 +2297,7 @@ function GrooveUtils() {
 			if (root.myGrooveData) {
 				root.myGrooveData.tempo = root.getTempo();
 				root.myGrooveData.swingPercent = root.getSwing();
+
 				var midiURL = root.create_MIDIURLFromGrooveData(root.myGrooveData);
 				root.loadMIDIFromURL(midiURL);
 				root.midiEventCallbacks.noteHasChangedSinceLastDataLoad = false;
@@ -2758,32 +2761,34 @@ function GrooveUtils() {
 
 		// the midi functions expect just one measure at a time to work correctly
 		// call once for each measure
-    var measure_notes = FullNoteHHArray.length / myGrooveData.numberOfMeasures;
-    for (var measureIndex = 0; measureIndex < myGrooveData.numberOfMeasures; measureIndex++) {
+		var measure_notes = FullNoteHHArray.length / myGrooveData.numberOfMeasures;
+		for (var measureIndex = 0; measureIndex < myGrooveData.numberOfMeasures; measureIndex++) {
 
-      var FullNoteTomsArray = [];
-      for(var i = 0; i < constant_NUMBER_OF_TOMS; i++) {
-      	var orig_measure_notes = myGrooveData.notesPerMeasure;
-        FullNoteTomsArray[i] = root.scaleNoteArrayToFullSize(myGrooveData.toms_array[i].slice(orig_measure_notes*measureIndex, orig_measure_notes*(measureIndex+1)),
-																														 1,
-																														 myGrooveData.notesPerMeasure,
-																														 myGrooveData.numBeats,
-																														 myGrooveData.noteValue);
-      }
+		var FullNoteTomsArray = [];
+		for(var i = 0; i < constant_NUMBER_OF_TOMS; i++) {
+			var orig_measure_notes = myGrooveData.notesPerMeasure;
+			FullNoteTomsArray[i] = root.scaleNoteArrayToFullSize(myGrooveData.toms_array[i].slice(orig_measure_notes*measureIndex, orig_measure_notes*(measureIndex+1)),
+																															1,
+																															myGrooveData.notesPerMeasure,
+																															myGrooveData.numBeats,
+																															myGrooveData.noteValue);
+		}
 
-      root.MIDI_from_HH_Snare_Kick_Arrays(midiTrack,
-          FullNoteHHArray.slice(measure_notes*measureIndex, measure_notes*(measureIndex+1)),
-          FullNoteSnareArray.slice(measure_notes*measureIndex, measure_notes*(measureIndex+1)),
-          FullNoteKickArray.slice(measure_notes*measureIndex, measure_notes*(measureIndex+1)),
-          FullNoteTomsArray,
-          MIDI_type,
-          myGrooveData.metronomeFrequency,
-          measure_notes,
-          myGrooveData.timeDivision,
-          swing_percentage,
-          myGrooveData.numBeats,
-          myGrooveData.noteValue);
-    }
+		root.MIDI_from_HH_Snare_Kick_Arrays(midiTrack,
+			FullNoteHHArray.slice(measure_notes*measureIndex, measure_notes*(measureIndex+1)),
+			FullNoteSnareArray.slice(measure_notes*measureIndex, measure_notes*(measureIndex+1)),
+			FullNoteKickArray.slice(measure_notes*measureIndex, measure_notes*(measureIndex+1)),
+			FullNoteTomsArray,
+			MIDI_type,
+			myGrooveData.metronomeFrequency,
+			measure_notes,
+			myGrooveData.timeDivision,
+			swing_percentage,
+			myGrooveData.numBeats,
+			myGrooveData.noteValue);
+		}
+
+		console.log('---> midiFile', midiFile)
 
 		var midi_url = "data:audio/midi;base64," + btoa(midiFile.toBytes());
 
@@ -2794,6 +2799,7 @@ function GrooveUtils() {
 
 		MIDI.Player.timeWarp = 1; // speed the song is played back
 		MIDI.Player.BPM = root.getTempo();
+
 		MIDI.Player.loadFile(midiURL, midiLoaderCallback());
 	};
 
@@ -2946,6 +2952,11 @@ function GrooveUtils() {
 	// This is different from the callbacks that we use for the midi code in this library to
 	// do events.   (Double chaining)
 	function ourMIDICallback(data) {
+		// console.log('>>> MIDIcallback', MIDI);
+		// console.log('>>> MIDI callback', data, MIDI.Player);
+		// console.log('**** myGrooveData', root.myGrooveData)
+		// console.log('---> MIDI data', MIDI.Player.endTime);
+		// console.log('>>> MIDI data', JSON.stringify(MIDI.Player.data));
 		var percentComplete = (data.now / data.end);
 		root.midiEventCallbacks.percentProgress(root.midiEventCallbacks.classRoot, percentComplete * 100);
 
@@ -3020,6 +3031,19 @@ function GrooveUtils() {
 					root.noteCallback(note_type);
 				}
 			}
+
+			global_game_played_notes.push({
+				data,
+				// classRoot: root.midiEventCallbacks.classRoot,
+				noteType: note_type,
+				percentComplete,
+				currentTime: MIDI.Player.currentTime,
+				global_last_midi_update_time: global_last_midi_update_time,
+				global_total_midi_play_time_msecs,
+				global_total_midi_notes,
+				global_total_midi_repeats
+			});
+			// console.log('>>> global_game_played_notes', global_game_played_notes);
 		}
 
 		// this used to work when we used note 60 as a spacer between chords
@@ -3415,4 +3439,14 @@ function GrooveUtils() {
 		// enable or disable swing
 		root.swingEnabled(root.doesDivisionSupportSwing(division));
 	};
+
+	function hitMidi() {
+		global_game_hit_notes.push({
+			currentTime: MIDI.Player.currentTime,
+			global_last_midi_update_time,
+			global_total_midi_play_time_msecs,
+			global_total_midi_notes,
+			global_total_midi_repeats
+		});
+	}
 } // end of class
