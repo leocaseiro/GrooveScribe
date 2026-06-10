@@ -43,7 +43,11 @@ const { GrooveUtils, GrooveToGuitarPro } = loadGrooveScribe();
 const gu = new GrooveUtils();
 
 // --- helpers shared by all tests ---
-export function grooveFromUrl(url) { return gu.getGrooveDataFromUrlString(url); }
+// getGrooveDataFromUrlString does my_string.substring(1) (it expects a leading
+// '?' like location.search). Without it, the FIRST param's leading char is eaten
+// — e.g. "TimeSig=3/4" becomes "imeSig=3/4", silently falling back to 4/4. Prepend
+// a '?' when absent so every fixture parses correctly regardless of leading char.
+export function grooveFromUrl(url) { return gu.getGrooveDataFromUrlString(url[0] === '?' ? url : '?' + url); }
 
 export function importTex(tex) {
   const settings = new alphaTab.Settings();
