@@ -115,6 +115,32 @@ for (const [name, url] of Object.entries(parityFixtures)) {
   });
 }
 
+test('two measures produce two bars', () => {
+  const gd = grooveFromUrl('TimeSig=4/4&Div=16&H=|x-x-x-x-x-x-x-x-|x-x-x-x-x-x-x-x-|&S=|----o-------o---|----o-------o---|&K=|o-------o-------|o-------o-------|&measures=2');
+  const { score } = importTex(GrooveToGuitarPro.createAlphaTex(gd, gu));
+  assert.equal(score.tracks[0].staves[0].bars.length, 2);
+  assert.deepEqual(beatDurations(score), abcHandsExpectedDurations(gd));
+});
+
+test('3/4 time signature', () => {
+  const gd = grooveFromUrl('?TimeSig=3/4&Div=16&H=|x-x-x-x-x-x-|&S=|----o-------|&K=|o-------o---|&measures=1');
+  const tex = GrooveToGuitarPro.createAlphaTex(gd, gu);
+  assert.match(tex, /\\ts 3 4/);
+  const { score } = importTex(tex);
+  const mb = score.masterBars[0];
+  assert.equal(mb.timeSignatureNumerator, 3);
+  assert.equal(mb.timeSignatureDenominator, 4);
+});
+
+test('7/8 time signature', () => {
+  const gd = grooveFromUrl('?TimeSig=7/8&Div=16&H=|x-x-x-x-x-x-x-|&S=|------------------------------|&K=|o-------------|&measures=1');
+  const tex = GrooveToGuitarPro.createAlphaTex(gd, gu);
+  assert.match(tex, /\\ts 7 8/);
+  const { score } = importTex(tex);
+  assert.equal(score.masterBars[0].timeSignatureNumerator, 7);
+  assert.equal(score.masterBars[0].timeSignatureDenominator, 8);
+});
+
 test('rock beat: chords + eighths import and export', () => {
   const gd = grooveFromUrl('TimeSig=4/4&Div=16&H=|x-x-x-x-x-x-x-x-|&S=|----o-------o---|&K=|o-------o-------|&measures=1');
   const tex = GrooveToGuitarPro.createAlphaTex(gd, gu);
