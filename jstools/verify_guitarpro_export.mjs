@@ -256,6 +256,25 @@ test('backbeat flam (snare flam + hi-hat) emits the grace before the chord', () 
   assert.equal(graces.length, 2, 'two backbeat flams -> two grace beats');
 });
 
+test('title with a double-quote does not break the export', () => {
+  const gd = grooveFromUrl('TimeSig=4/4&Div=16&H=|x-x-x-x-x-x-x-x-|&S=|----o-------o---|&K=|o-------o-------|&measures=1&Title=My "Cool" Beat');
+  gd.title = 'My "Cool" Beat';   // belt-and-suspenders (URL decode may strip)
+  const tex = GrooveToGuitarPro.createAlphaTex(gd, gu);
+  importTex(tex); // must NOT throw
+  assert.ok(!/\\title "[^"]*"[^"]*"/.test(tex.split('\n')[0]), 'no raw inner quote in title line');
+});
+
+test('author becomes \\subtitle when present', () => {
+  const gd = grooveFromUrl('TimeSig=4/4&Div=16&H=|x---------------|&measures=1');
+  gd.author = 'Jane Drummer';
+  const tex = GrooveToGuitarPro.createAlphaTex(gd, gu);
+  assert.match(tex, /\\subtitle "Jane Drummer"/);
+});
+
+test('escapeAlphaTex strips quotes, backslashes, and newlines', () => {
+  assert.equal(GrooveToGuitarPro.escapeAlphaTex('a"b\\c\nd'), 'abc d');
+});
+
 test('rock beat: chords + eighths import and export', () => {
   const gd = grooveFromUrl('TimeSig=4/4&Div=16&H=|x-x-x-x-x-x-x-x-|&S=|----o-------o---|&K=|o-------o-------|&measures=1');
   const tex = GrooveToGuitarPro.createAlphaTex(gd, gu);

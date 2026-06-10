@@ -41,6 +41,15 @@ var GrooveToGuitarPro = (function () {
 
   function articulationFor(pitch) { return ARTICULATION_MAP[pitch] || null; }
 
+  // Escape user-controlled strings for safe interpolation into alphaTex quoted fields.
+  // An unescaped '"' throws UnsupportedFormatError and aborts the entire export (F4).
+  function escapeAlphaTex(str) {
+    return String(str == null ? '' : str)
+      .replace(/[\\"]/g, '')      // drop backslashes and double-quotes
+      .replace(/[\r\n]+/g, ' ')   // collapse newlines to a space
+      .trim();
+  }
+
   // Effect decorations that GrooveScribe moves to the FRONT of a chord (apply to all notes).
   var LEADING_DECORATIONS = ['!accent!', '!open!', '!plus!', '!///!'];
   // Decoration -> alphaTex note-effect (or articulation override for open/close).
@@ -152,7 +161,10 @@ var GrooveToGuitarPro = (function () {
     var usedNames = {};
     var music = translateHands(handsLine, usedNames);
 
-    var header = '\\title "' + (gd.title || 'GrooveScribe') + '" \\tempo ' + (gd.tempo || 120) + '\n.\n';
+    var header = '\\title "' + (escapeAlphaTex(gd.title) || 'GrooveScribe') + '"';
+    var subtitle = escapeAlphaTex(gd.author);
+    if (subtitle) header += ' \\subtitle "' + subtitle + '"';
+    header += ' \\tempo ' + (gd.tempo || 120) + '\n.\n';
     header += '\\track "Drums"\n\\instrument percussion \\clef neutral\n';
     header += '\\ts ' + (gd.numBeats || 4) + ' ' + (gd.noteValue || 4) + '\n';
     Object.keys(usedNames).forEach(function (name) {
@@ -174,6 +186,7 @@ var GrooveToGuitarPro = (function () {
 
   return {
     ARTICULATION_MAP: ARTICULATION_MAP,
+    escapeAlphaTex: escapeAlphaTex,
     createAlphaTex: createAlphaTex,
     createGpData: createGpData,
   };
