@@ -63,6 +63,58 @@ export function beatDurations(score) {
   return out;
 }
 
+// Parse the V:Hands ABC line into expected duration enum names, using the SAME
+// rule the generator uses (32/units). This makes GrooveScribe's ABC engine the
+// source of truth (review F2): the generator must not drift from it.
+export function abcHandsExpectedDurations(gd) {
+  const abc = gu.createABCFromGrooveData(Object.assign({}, gd, { showLegend: false }), 800);
+  const after = abc.slice(abc.indexOf('K:C clef=perc'));
+  const m = after.match(/V:Hands[^\n]*\n%%voicemap drum\n([\s\S]*?)(?:\nV:|\nT:|$)/);
+  const line = m ? m[1].replace(/\n/g, ' ').trim() : '';
+  // \[[^\]]*\]\d*  matches BOTH chord forms: [^g4F4] (dur inside) and [F^d,]8 (dur after).
+  const re = /\(3:3:3|\[[^\]]*\]\d*|\^?[A-Ga-gz][,']*\d+|\|+/g;
+  const out = [];
+  let tok;
+  while ((tok = re.exec(line))) {
+    const t = tok[0];
+    if (t === '(3:3:3' || /^\|+$/.test(t)) continue;
+    let units, isRest = false;
+    if (t[0] === '[') {
+      const tr = t.match(/\](\d+)$/);                // trailing dur (kick+splash form)
+      units = tr ? +tr[1] : +t.match(/(\d+)\]/)[1];  // else first inner note's dur
+    } else if (t[0] === 'z') { isRest = true; units = +t.match(/(\d+)$/)[1]; }
+    else { units = +t.match(/(\d+)$/)[1]; }
+    out.push((isRest ? 'r' : '') + alphaTab.model.Duration[32 / units]);
+  }
+  return out;
+}
+
+test('sparse snare on beat 1 is a QUARTER, not 16ths', () => {
+  const gd = grooveFromUrl('TimeSig=4/4&Div=16&H=|----------------|&S=|o---------------|&K=|----------------|&measures=1');
+  const { score } = importTex(GrooveToGuitarPro.createAlphaTex(gd, gu));
+  assert.deepEqual(beatDurations(score), ['Quarter', 'rQuarter', 'rQuarter', 'rQuarter']);
+});
+
+test('sparse kick+snare with merged rests', () => {
+  const gd = grooveFromUrl('TimeSig=4/4&Div=16&H=|----------------|&S=|--------o-------|&K=|o---------------|&measures=1');
+  const { score } = importTex(GrooveToGuitarPro.createAlphaTex(gd, gu));
+  assert.deepEqual(beatDurations(score), ['Quarter', 'rQuarter', 'Quarter', 'rQuarter']);
+});
+
+// §10-F2: every fixture's generated durations must equal the ABC engine's.
+const parityFixtures = {
+  rock: 'TimeSig=4/4&Div=16&H=|x-x-x-x-x-x-x-x-|&S=|----o-------o---|&K=|o-------o-------|&measures=1',
+  sparseSnare: 'TimeSig=4/4&Div=16&H=|----------------|&S=|o---------------|&K=|----------------|&measures=1',
+  sparseKickSnare: 'TimeSig=4/4&Div=16&H=|----------------|&S=|--------o-------|&K=|o---------------|&measures=1',
+};
+for (const [name, url] of Object.entries(parityFixtures)) {
+  test(`duration parity with ABC engine: ${name}`, () => {
+    const gd = grooveFromUrl(url);
+    const { score } = importTex(GrooveToGuitarPro.createAlphaTex(gd, gu));
+    assert.deepEqual(beatDurations(score), abcHandsExpectedDurations(gd));
+  });
+}
+
 test('rock beat: chords + eighths import and export', () => {
   const gd = grooveFromUrl('TimeSig=4/4&Div=16&H=|x-x-x-x-x-x-x-x-|&S=|----o-------o---|&K=|o-------o-------|&measures=1');
   const tex = GrooveToGuitarPro.createAlphaTex(gd, gu);
