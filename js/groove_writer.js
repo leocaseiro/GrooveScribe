@@ -24,7 +24,7 @@
 /*jshint multistr: true */
 /*jslint browser:true devel:true */
 
-/*global GrooveUtils, Midi, Share */
+/*global GrooveUtils, Midi, Share, GrooveToGuitarPro */
 /*global MIDI, constant_MAX_MEASURES, constant_DEFAULT_TEMPO, constant_ABC_STICK_R, constant_ABC_STICK_L, constant_ABC_STICK_BOTH, constant_ABC_STICK_OFF, constant_ABC_STICK_COUNT, constant_ABC_HH_Ride, constant_ABC_HH_Ride_Bell, constant_ABC_HH_Cow_Bell, constant_ABC_HH_Crash, constant_ABC_HH_Stacker, constant_ABC_HH_Open, constant_ABC_HH_Close, constant_ABC_HH_Accent, constant_ABC_HH_Normal, constant_ABC_SN_Ghost, constant_ABC_SN_Accent, constant_ABC_SN_Normal, constant_ABC_SN_XStick, constant_ABC_SN_Buzz, constant_ABC_SN_Flam, constant_ABC_SN_Drag, constant_ABC_KI_SandK, constant_ABC_KI_Splash, constant_ABC_KI_Normal, constant_ABC_T1_Normal, constant_ABC_T2_Normal, constant_ABC_T3_Normal, constant_ABC_T4_Normal, constant_NUMBER_OF_TOMS, constant_ABC_OFF, constant_OUR_MIDI_VELOCITY_NORMAL, constant_OUR_MIDI_VELOCITY_ACCENT, constant_OUR_MIDI_VELOCITY_GHOST, constant_OUR_MIDI_METRONOME_1, constant_OUR_MIDI_METRONOME_NORMAL, constant_OUR_MIDI_HIHAT_NORMAL, constant_OUR_MIDI_HIHAT_OPEN, constant_OUR_MIDI_HIHAT_ACCENT, constant_OUR_MIDI_HIHAT_CRASH, constant_OUR_MIDI_HIHAT_STACKER, constant_OUR_MIDI_HIHAT_RIDE, constant_OUR_MIDI_HIHAT_FOOT, constant_OUR_MIDI_SNARE_NORMAL, constant_OUR_MIDI_SNARE_ACCENT, constant_OUR_MIDI_SNARE_GHOST, constant_OUR_MIDI_SNARE_XSTICK, constant_OUR_MIDI_SNARE_XSTICK, constant_OUR_MIDI_SNARE_FLAM, onstant_OUR_MIDI_SNARE_DRAG, constant_OUR_MIDI_KICK_NORMAL, constant_OUR_MIDI_TOM1_NORMAL, constant_OUR_MIDI_TOM2_NORMAL, constant_OUR_MIDI_TOM4_NORMAL, constant_OUR_MIDI_TOM4_NORMAL */
 
 // GrooveWriter class.   The only one in this file.
@@ -760,74 +760,6 @@ function GrooveWriter() {
 	var class_cur_snare_highlight_id = false;
 	var class_cur_kick_highlight_id = false;
 
-	function hilight_individual_note(instrument, id) {
-		var hilight_all_notes = true; // on by default
-
-		id = Math.floor(id);
-		if (id < 0 || id >= class_notes_per_measure * class_number_of_measures)
-			return;
-
-		// turn this one on;
-		document.getElementById(instrument + id).style.borderColor = "orange";
-
-		// turn off all the previously highlighted notes that are not on the same beat
-		if (class_cur_hh_highlight_id !== false && class_cur_hh_highlight_id != id) {
-			if (class_cur_hh_highlight_id < class_notes_per_measure * class_number_of_measures)
-				document.getElementById("hi-hat" + class_cur_hh_highlight_id).style.borderColor = "transparent";
-			class_cur_hh_highlight_id = false;
-		}
-		if (class_cur_tom1_highlight_id !== false && class_cur_tom1_highlight_id != id) {
-			if (class_cur_tom1_highlight_id < class_notes_per_measure * class_number_of_measures)
-				document.getElementById("tom1-" + class_cur_tom4_highlight_id).style.borderColor = "transparent";
-			class_cur_tom1_highlight_id = false;
-		}
-		if (class_cur_tom2_highlight_id !== false && class_cur_tom2_highlight_id != id) {
-			if (class_cur_tom2_highlight_id < class_notes_per_measure * class_number_of_measures)
-				document.getElementById("tom2-" + class_cur_tom4_highlight_id).style.borderColor = "transparent";
-			class_cur_tom2_highlight_id = false;
-		}
-		if (class_cur_tom4_highlight_id !== false && class_cur_tom4_highlight_id != id) {
-			if (class_cur_tom4_highlight_id < class_notes_per_measure * class_number_of_measures)
-				document.getElementById("tom4-" + class_cur_tom4_highlight_id).style.borderColor = "transparent";
-			class_cur_tom4_highlight_id = false;
-		}
-		if (class_cur_snare_highlight_id !== false && class_cur_snare_highlight_id != id) {
-			if (class_cur_snare_highlight_id < class_notes_per_measure * class_number_of_measures)
-				document.getElementById("snare" + class_cur_snare_highlight_id).style.borderColor = "transparent";
-			class_cur_snare_highlight_id = false;
-		}
-		if (class_cur_kick_highlight_id !== false && class_cur_kick_highlight_id != id) {
-			if (class_cur_kick_highlight_id < class_notes_per_measure * class_number_of_measures)
-				document.getElementById("kick" + class_cur_kick_highlight_id).style.borderColor = "transparent";
-			class_cur_kick_highlight_id = false;
-		}
-
-		switch (instrument) {
-			case "hi-hat":
-				class_cur_hh_highlight_id = id;
-				break;
-			case "tom1":
-				class_cur_tom1_highlight_id = id;
-				break;
-			case "tom2":
-				class_cur_tom2_highlight_id = id;
-				break;
-			case "tom4":
-				class_cur_tom4_highlight_id = id;
-				break;
-			case "snare":
-				class_cur_snare_highlight_id = id;
-				break;
-			case "kick":
-				class_cur_kick_highlight_id = id;
-				break;
-			default:
-				console.log("bad case in hilight_note");
-				break;
-		}
-
-	}
-
 	var class_cur_all_notes_highlight_id = false;
 
 	function hilight_all_notes_on_same_beat(instrument, id) {
@@ -866,7 +798,6 @@ function GrooveWriter() {
 		var note_id_in_32 = Math.floor(percent_complete * root.myGrooveUtils.calc_notes_per_measure((usingTriplets() ? 48 : 32), class_num_beats_per_measure, class_note_value_per_measure) * class_number_of_measures);
 		var real_note_id = (note_id_in_32 / root.myGrooveUtils.getNoteScaler(class_notes_per_measure, class_num_beats_per_measure, class_note_value_per_measure));
 
-		//hilight_individual_note(instrument, id);
 		hilight_all_notes_on_same_beat(instrument, real_note_id);
 	}
 
