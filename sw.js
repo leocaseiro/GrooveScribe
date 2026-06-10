@@ -75,7 +75,10 @@ self.addEventListener('fetch', function(event) {
       caches.open(coreID).then(function(cache) {
         return cache.match(event.request).then(function(cached) {
           return cached || fetch(event.request).then(function(response) {
-            if (response.ok) cache.put(event.request, response.clone());
+            // Only cache a real JS bundle. A 200 with an HTML body (captive portal,
+            // CDN error page) would otherwise poison the cache and then fail SRI forever.
+            var ct = response.headers.get('content-type') || '';
+            if (response.ok && ct.indexOf('javascript') !== -1) cache.put(event.request, response.clone());
             return response;
           });
         });
