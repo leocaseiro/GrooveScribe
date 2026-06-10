@@ -164,6 +164,9 @@ var GrooveToGuitarPro = (function () {
     // never include the on-screen legend in the export
     var gd = Object.assign({}, grooveData);
     gd.showLegend = false;
+    // Object.assign is shallow: copy sticking_array so createABCFromGrooveData
+    // can't mutate the caller's array in place (it does when the note-scaler is 1).
+    gd.sticking_array = (grooveData.sticking_array || []).slice();
     var abc = grooveUtils.createABCFromGrooveData(gd, 800);
     var handsLine = extractHandsMusic(abc);
 
@@ -198,6 +201,7 @@ var GrooveToGuitarPro = (function () {
   function createStickingVoice(grooveData, grooveUtils) {
     var gd = Object.assign({}, grooveData);
     gd.showLegend = false;
+    gd.sticking_array = (grooveData.sticking_array || []).slice();  // shallow-copy guard (see createAlphaTex)
     var abc = grooveUtils.createABCFromGrooveData(gd, 800);
     var line = extractStickingsMusic(abc);
     var measures = [[]];
@@ -214,7 +218,10 @@ var GrooveToGuitarPro = (function () {
     return measures;
   }
 
-  function createGpData(grooveData, grooveUtils, alphaTab) {
+  // Build the alphaTab score: the drum voice (from the tex) plus the optional
+  // stickings/counting text voice. Split out from the export so the voice
+  // construction — especially triplet tuplet alignment — is unit-testable.
+  function buildScore(grooveData, grooveUtils, alphaTab) {
     var tex = createAlphaTex(grooveData, grooveUtils);
     var settings = new alphaTab.Settings();
     var importer = new alphaTab.importer.AlphaTexImporter();
@@ -224,6 +231,10 @@ var GrooveToGuitarPro = (function () {
     var stickings = createStickingVoice(grooveData, grooveUtils);
     var hasText = stickings.some(function (m) { return m.some(function (b) { return b.text; }); });
     if (hasText) {
+      // The drum voice carries {tu 3} tuplets on triplet grids; the text voice
+      // must match or the two voices won't sum to the same bar length.
+      var isTriplet = grooveUtils.isTripletDivisionFromNotesPerMeasure(
+        grooveData.notesPerMeasure, grooveData.numBeats, grooveData.noteValue);
       var bars = score.tracks[0].staves[0].bars;
       for (var i = 0; i < bars.length && i < stickings.length; i++) {
         var voice = new alphaTab.model.Voice();
@@ -231,13 +242,19 @@ var GrooveToGuitarPro = (function () {
         stickings[i].forEach(function (desc) {
           var beat = new alphaTab.model.Beat();
           beat.duration = desc.durationValue;          // enum value == 32/units
+          if (isTriplet) { beat.tupletNumerator = 3; beat.tupletDenominator = 2; }
           if (desc.text) beat.text = desc.text;        // FreeText; no notes -> rest
           voice.addBeat(beat);
         });
       }
       score.finish(settings);
     }
-    return new alphaTab.exporter.Gp7Exporter().export(score, settings);
+    return { score: score, settings: settings };
+  }
+
+  function createGpData(grooveData, grooveUtils, alphaTab) {
+    var built = buildScore(grooveData, grooveUtils, alphaTab);
+    return new alphaTab.exporter.Gp7Exporter().export(built.score, built.settings);
   }
 
   return {
@@ -245,6 +262,7 @@ var GrooveToGuitarPro = (function () {
     escapeAlphaTex: escapeAlphaTex,
     createAlphaTex: createAlphaTex,
     createStickingVoice: createStickingVoice,
+    buildScore: buildScore,
     createGpData: createGpData,
   };
 })();

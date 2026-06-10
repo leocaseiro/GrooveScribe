@@ -292,6 +292,23 @@ test('stickings OFF adds no second voice', () => {
   assert.ok(beats.every(measure => measure.every(b => !b.text)), 'no text beats');
 });
 
+test('triplet groove: the stickings/counting voice gets the same tuplet as the drum voice', () => {
+  const gd = grooveFromUrl('TimeSig=4/4&Div=12&H=|xxxxxxxxxxxx|&S=|------------|&K=|o--o--o--o--|&Stickings=|cccccccccccc|&measures=1');
+  const { score } = GrooveToGuitarPro.buildScore(gd, gu, alphaTab);
+  const bar0 = score.tracks[0].staves[0].bars[0];
+  assert.ok(bar0.voices[0].beats.every(b => b.tupletNumerator === 3), 'drum voice is triplet');
+  const sticking = bar0.voices[1].beats;
+  assert.ok(sticking.length > 0, 'sticking voice exists');
+  assert.ok(sticking.every(b => b.tupletNumerator === 3), 'sticking voice matches the triplet tuplet');
+});
+
+test('straight groove: the stickings voice carries no triplet tuplet', () => {
+  const gd = grooveFromUrl('TimeSig=4/4&Div=16&H=|x-x-x-x-x-x-x-x-|&S=|----o-------o---|&K=|o-------o-------|&Stickings=|cccccccccccccccc|&measures=1');
+  const { score } = GrooveToGuitarPro.buildScore(gd, gu, alphaTab);
+  const sticking = score.tracks[0].staves[0].bars[0].voices[1].beats;
+  assert.ok(sticking.every(b => b.tupletNumerator !== 3), 'no false triplet on a straight groove');
+});
+
 test('empty groove produces a valid one-bar rest and never throws', () => {
   const gd = grooveFromUrl('TimeSig=4/4&Div=16&H=|----------------|&S=|----------------|&K=|----------------|&measures=1');
   const tex = GrooveToGuitarPro.createAlphaTex(gd, gu);
