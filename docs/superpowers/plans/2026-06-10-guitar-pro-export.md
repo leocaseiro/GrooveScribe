@@ -251,7 +251,9 @@ var GrooveToGuitarPro = (function () {
   // Extract the V:Hands music (across measures) from full ABC, skipping the
   // optional on-screen legend (which also contains a V:Hands line in the header).
   function extractHandsMusic(abc) {
-    var afterClef = abc.slice(abc.indexOf('K:C clef=perc'));
+    var clefIdx = abc.indexOf('K:C clef=perc');
+    if (clefIdx === -1) return '';                 // unexpected ABC shape — fail closed, don't slice(-1)
+    var afterClef = abc.slice(clefIdx);
     var m = afterClef.match(/V:Hands[^\n]*\n%%voicemap drum\n([\s\S]*?)(?:\nV:|\nT:|$)/);
     return m ? m[1].replace(/\n/g, ' ').trim() : '';
   }
@@ -293,6 +295,7 @@ var GrooveToGuitarPro = (function () {
       if (rm) { emit('r.' + durFromUnits(+rm[1])); i += rm[0].length; continue; }
       if (ch === '[') {                            // chord
         var end = line.indexOf(']', i);
+        if (end === -1) { i++; continue; }         // malformed: no closing bracket — skip, never loop forever
         var innerStr = line.slice(i + 1, end);
         i = end + 1;
         var units;
@@ -771,6 +774,7 @@ Then **replace** the Task 1 `translateHands` with the decoration-aware scanner. 
       var movedEffects = leading.filter(function (d) { return LEADING_DECORATIONS.indexOf(d) !== -1; });
       if (line[i] === '[') {                        // chord
         var end = line.indexOf(']', i);
+        if (end === -1) { i++; continue; }         // malformed: no closing bracket — skip, never loop forever
         var innerStr = line.slice(i + 1, end);
         i = end + 1;
         var units;
@@ -899,6 +903,7 @@ In `translateHands`, add a grace block **after** the leading-decoration scan and
       }
       if (line[i] === '[') {                        // chord
         var end = line.indexOf(']', i);
+        if (end === -1) { i++; continue; }         // malformed: no closing bracket — skip, never loop forever
         var innerStr = line.slice(i + 1, end);
         i = end + 1;
         var units;
@@ -1091,7 +1096,9 @@ In `js/groove_to_guitarpro.js`, add `createStickingVoice` (translates the `V:Sti
 
 ```js
   function extractStickingsMusic(abc) {
-    var afterClef = abc.slice(abc.indexOf('K:C clef=perc'));
+    var clefIdx = abc.indexOf('K:C clef=perc');
+    if (clefIdx === -1) return '';
+    var afterClef = abc.slice(clefIdx);
     var m = afterClef.match(/V:Stickings[^\n]*\n([\s\S]*?)(?:\nV:|\nT:|$)/);
     return m ? m[1].replace(/\n/g, ' ').trim() : '';
   }
