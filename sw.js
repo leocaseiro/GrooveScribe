@@ -1,4 +1,4 @@
-var version = '1.2.1';
+var version = '1.2.2';
 var timeStamp = Date.now();
 var coreID = 'leocaseiro.github.io' + version;
 var cacheIDs = [coreID];
@@ -19,6 +19,7 @@ self.addEventListener('install', function(e) {
         '/GrooveScribe/images/gscribe-icon-96.png?timestamp=' + timeStamp,
         '/GrooveScribe/js/abc2svg-1.js?timestamp=' + timeStamp,
         '/GrooveScribe/js/groove_utils.js?timestamp=' + timeStamp,
+        '/GrooveScribe/js/groove_to_guitarpro.js?timestamp=' + timeStamp,
         '/GrooveScribe/js/groove_practices.js?timestamp=' + timeStamp,
         '/GrooveScribe/js/groove_writer.js?timestamp=' + timeStamp,
         '/GrooveScribe/js/grooves.js?timestamp=' + timeStamp,
@@ -56,7 +57,24 @@ self.addEventListener('activate', function (event) {
 	}));
 });
 
+var ALPHATAB_CDN_URL = 'https://cdn.jsdelivr.net/npm/@coderline/alphatab@1.8.3/dist/alphaTab.min.js';
+
 self.addEventListener('fetch', function(event) {
+  // Runtime-cache the alphaTab CDN bundle so Guitar Pro export works offline
+  // after the first use. jsDelivr is CORS-enabled, so the response is non-opaque.
+  if (event.request.url === ALPHATAB_CDN_URL) {
+    event.respondWith(
+      caches.open(coreID).then(function(cache) {
+        return cache.match(event.request).then(function(cached) {
+          return cached || fetch(event.request).then(function(response) {
+            cache.put(event.request, response.clone());
+            return response;
+          });
+        });
+      })
+    );
+    return;
+  }
   event.respondWith(
     caches.match(event.request, {ignoreSearch:true}).then(function(response) {
       return response || fetch(event.request);
