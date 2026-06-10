@@ -2593,6 +2593,75 @@ function GrooveWriter() {
 		document.location = midi_url;
 	};
 
+	// --- Guitar Pro export -------------------------------------------------
+	var ALPHATAB_CDN_URL = 'https://cdn.jsdelivr.net/npm/@coderline/alphatab@1.8.3/dist/alphaTab.min.js';
+	var ALPHATAB_SRI = 'sha384-qUm2Zrf12JTeEmtMQAdvtbVFGrxkxSSrmqyEU4avNOo/QxYnmgpDsfsdWvYrhmxw';
+	var _alphaTabPendingLoad = [];
+	var _alphaTabPendingError = [];
+
+	// Lazy-load alphaTab from the CDN exactly once. Only the importer + exporter
+	// are used (no AlphaTabApi), so no Web Worker, audio, or font assets load.
+	function loadAlphaTab(onLoad, onError) {
+		if (root.alphaTab && root.alphaTab.importer && root.alphaTab.importer.AlphaTexImporter) {
+			onLoad(root.alphaTab);
+			return;
+		}
+		_alphaTabPendingLoad.push(onLoad);
+		_alphaTabPendingError.push(onError);
+		if (document.getElementById('alphaTabScript')) return; // injection already in flight
+
+		var script = document.createElement('script');
+		script.id = 'alphaTabScript';
+		script.src = ALPHATAB_CDN_URL;
+		script.integrity = ALPHATAB_SRI;
+		script.crossOrigin = 'anonymous';
+		script.onload = function () {
+			if (root.alphaTab && root.alphaTab.importer && root.alphaTab.importer.AlphaTexImporter) {
+				var cbs = _alphaTabPendingLoad; _alphaTabPendingLoad = []; _alphaTabPendingError = [];
+				cbs.forEach(function (cb) { cb(root.alphaTab); });
+			} else {
+				script.remove(); // reset so a later click can retry
+				var errs = _alphaTabPendingError; _alphaTabPendingLoad = []; _alphaTabPendingError = [];
+				errs.forEach(function (cb) { cb(new Error('alphaTab loaded but API missing')); });
+			}
+		};
+		script.onerror = function () {
+			script.remove(); // reset so a later click can retry
+			var errs = _alphaTabPendingError; _alphaTabPendingLoad = []; _alphaTabPendingError = [];
+			errs.forEach(function (cb) { cb(new Error('Failed to load alphaTab')); });
+		};
+		document.head.appendChild(script);
+	}
+
+	function sanitizeFilename(name) {
+		var n = (name || '').replace(/[\/\\:*?"<>|]/g, '').trim();
+		return n.length ? n : 'GrooveScribe';
+	}
+
+	root.GPSaveAs = function () {
+		loadAlphaTab(function (alphaTab) {
+			try {
+				var grooveData = root.grooveDataFromClickableUI();
+				var bytes = GrooveToGuitarPro.createGpData(grooveData, root.myGrooveUtils, alphaTab);
+				var blob = new Blob([bytes], { type: 'application/gp' });
+				var url = URL.createObjectURL(blob);
+				var a = document.createElement('a');
+				a.href = url;
+				a.download = sanitizeFilename(grooveData.title) + '.gp';
+				document.body.appendChild(a);
+				a.click();
+				a.remove();
+				URL.revokeObjectURL(url);
+			} catch (e) {
+				if (typeof console !== 'undefined') console.error(e);
+				alert('Guitar Pro export failed: ' + e.message);
+			}
+		}, function (err) {
+			if (typeof console !== 'undefined') console.error(err);
+			alert('Guitar Pro export unavailable — could not load the export library. Check your connection and try again.');
+		});
+	};
+
 	// creates a grooveData class from the clickable UI elements of the page
 	//
 	root.grooveDataFromClickableUI = function () {
