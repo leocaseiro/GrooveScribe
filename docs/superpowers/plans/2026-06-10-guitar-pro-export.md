@@ -797,7 +797,10 @@ Then **replace** the Task 1 `translateHands` with the decoration-aware scanner. 
         var nm = /^(\^?[A-Ga-g][,']*)(\d+)/.exec(line.slice(i));
         if (!nm) { i++; continue; }
         i += nm[0].length;
-        var one = resolveNote(nm[1], usedNames, movedEffects);
+        // single notes: pass ALL leading decorations, not just movedEffects — a lone
+        // ghost note is `!(.!!).!c8`, and ghost is NOT in LEADING_DECORATIONS, so it
+        // would be dropped if we filtered. (In chords, ghost rides inside the inner seg.)
+        var one = resolveNote(nm[1], usedNames, leading);
         emit((one || 'r') + '.' + durFromUnits(+nm[2]));
       }
     }
@@ -926,7 +929,10 @@ In `translateHands`, add a grace block **after** the leading-decoration scan and
         var nm = /^(\^?[A-Ga-g][,']*)(\d+)/.exec(line.slice(i));
         if (!nm) { i++; continue; }
         i += nm[0].length;
-        var one = resolveNote(nm[1], usedNames, movedEffects);
+        // single notes: pass ALL leading decorations, not just movedEffects — a lone
+        // ghost note is `!(.!!).!c8`, and ghost is NOT in LEADING_DECORATIONS, so it
+        // would be dropped if we filtered. (In chords, ghost rides inside the inner seg.)
+        var one = resolveNote(nm[1], usedNames, leading);
         emit((one || 'r') + '.' + durFromUnits(+nm[2]));
       }
     }
