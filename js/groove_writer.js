@@ -2605,8 +2605,8 @@ function GrooveWriter() {
 	// Lazy-load alphaTab from the CDN exactly once. Only the importer + exporter
 	// are used (no AlphaTabApi), so no Web Worker, audio, or font assets load.
 	function loadAlphaTab(onLoad, onError) {
-		if (root.alphaTab && root.alphaTab.importer && root.alphaTab.importer.AlphaTexImporter) {
-			onLoad(root.alphaTab);
+		if (window.alphaTab && window.alphaTab.importer && window.alphaTab.importer.AlphaTexImporter) {
+			onLoad(window.alphaTab);
 			return;
 		}
 		_alphaTabPendingLoad.push(onLoad);
@@ -2619,9 +2619,9 @@ function GrooveWriter() {
 		script.integrity = ALPHATAB_SRI;
 		script.crossOrigin = 'anonymous';
 		script.onload = function () {
-			if (root.alphaTab && root.alphaTab.importer && root.alphaTab.importer.AlphaTexImporter) {
+			if (window.alphaTab && window.alphaTab.importer && window.alphaTab.importer.AlphaTexImporter) {
 				var cbs = _alphaTabPendingLoad; _alphaTabPendingLoad = []; _alphaTabPendingError = [];
-				cbs.forEach(function (cb) { cb(root.alphaTab); });
+				cbs.forEach(function (cb) { cb(window.alphaTab); });
 			} else {
 				script.remove(); // reset so a later click can retry
 				var errs = _alphaTabPendingError; _alphaTabPendingLoad = []; _alphaTabPendingError = [];
