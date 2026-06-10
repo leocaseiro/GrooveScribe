@@ -184,6 +184,48 @@ test('kick + splash exports as a 2-note chord (Kick + HiHatPedal)', () => {
   assert.equal(score.tracks[0].staves[0].bars[0].voices[0].beats[0].notes.length, 2);
 });
 
+function beat0(score) { return score.tracks[0].staves[0].bars[0].voices[0].beats[0]; }
+
+test('accent maps to {ac} (note.isStaccato/accentuated flag set)', () => {
+  const gd = grooveFromUrl('TimeSig=4/4&Div=16&H=|----------------|&S=|O---------------|&K=|----------------|&measures=1');
+  const tex = GrooveToGuitarPro.createAlphaTex(gd, gu);
+  assert.match(tex, /Snare\{ac\}/);
+  const { score } = importTex(tex);
+  assert.notEqual(beat0(score).notes[0].accentuated, alphaTab.model.AccentuationType.None);
+});
+
+test('ghost snare maps to {g}', () => {
+  const gd = grooveFromUrl('TimeSig=4/4&Div=16&H=|----------------|&S=|g---------------|&K=|----------------|&measures=1');
+  const tex = GrooveToGuitarPro.createAlphaTex(gd, gu);
+  assert.match(tex, /Snare\{g\}/);
+  const { score } = importTex(tex);
+  assert.equal(beat0(score).notes[0].isGhost, true);
+});
+
+test('buzz snare maps to {tp (3 buzzRoll)}', () => {
+  const gd = grooveFromUrl('TimeSig=4/4&Div=16&H=|----------------|&S=|b---------------|&K=|----------------|&measures=1');
+  const tex = GrooveToGuitarPro.createAlphaTex(gd, gu);
+  assert.match(tex, /Snare\{tp \(3 buzzRoll\)\}/);
+  importTex(tex); // must not throw
+});
+
+test('open hi-hat swaps articulation to HiHatOpen', () => {
+  const gd = grooveFromUrl('TimeSig=4/4&Div=16&H=|o---------------|&S=|----------------|&K=|----------------|&measures=1');
+  const tex = GrooveToGuitarPro.createAlphaTex(gd, gu);
+  assert.match(tex, /\\articulation HiHatOpen 46/);
+  assert.match(tex, /HiHatOpen/);
+});
+
+test('whole-chord accent (HH+SN both accented) applies {ac} to chord notes', () => {
+  const gd = grooveFromUrl('TimeSig=4/4&Div=16&H=|X-X-X-X-X-X-X-X-|&S=|----O-------O---|&K=|o-------o-------|&measures=1');
+  const tex = GrooveToGuitarPro.createAlphaTex(gd, gu);
+  importTex(tex); // must not throw
+  assert.match(tex, /\{ac\}/);
+  // durations still match the engine
+  const { score } = importTex(tex);
+  assert.deepEqual(beatDurations(score), abcHandsExpectedDurations(gd));
+});
+
 test('rock beat: chords + eighths import and export', () => {
   const gd = grooveFromUrl('TimeSig=4/4&Div=16&H=|x-x-x-x-x-x-x-x-|&S=|----o-------o---|&K=|o-------o-------|&measures=1');
   const tex = GrooveToGuitarPro.createAlphaTex(gd, gu);

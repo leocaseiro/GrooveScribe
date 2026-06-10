@@ -41,24 +41,51 @@ var GrooveToGuitarPro = (function () {
 
   function articulationFor(pitch) { return ARTICULATION_MAP[pitch] || null; }
 
-  // Resolve one ABC pitch segment to an alphaTex articulation name.
-  // Task 1: pitch only. Task 6 replaces this to also handle decorations (the
-  // third `extraDecs` param). Returns null for unknown pitches.
+  // Effect decorations that GrooveScribe moves to the FRONT of a chord (apply to all notes).
+  var LEADING_DECORATIONS = ['!accent!', '!open!', '!plus!', '!///!'];
+  // Decoration -> alphaTex note-effect (or articulation override for open/close).
+  // Returns { effect: '{ac}'|'{g}'|'{tp (3 buzzRoll)}'|null, overrideName, overrideMidi }
+  function decorationEffect(dec, baseName) {
+    switch (dec) {
+      case '!accent!': return { effect: '{ac}' };
+      case '!(.!!).!': return { effect: '{g}' };
+      case '!///!':    return { effect: '{tp (3 buzzRoll)}' };
+      case '!open!':   return baseName === 'HiHat' ? { overrideName: 'HiHatOpen', overrideMidi: 46 } : {};
+      case '!plus!':   return {}; // close hi-hat == plain HiHat in GP
+      default:         return {};
+    }
+  }
+
+  // Resolve one ABC note segment ("[inner-decorations]pitch") to an alphaTex
+  // note string + records the used articulation. `extraDecs` are leading
+  // decorations that were moved out of a chord (apply to this note too).
   function resolveNote(seg, usedNames, extraDecs) {
-    var pm = seg.match(/^(\^?[A-Ga-g][,']*)/);
+    var decs = (extraDecs || []).slice();
+    var rest = seg;
+    var dm;
+    // pull inner decorations (!...! groups, including the ghost !(.!!).! form)
+    var decRe = /^(!\(\.!!\)\.!|![^!]*!)/;
+    while ((dm = rest.match(decRe))) { decs.push(dm[1]); rest = rest.slice(dm[1].length); }
+    var pm = rest.match(/^(\^?[A-Ga-g][,']*)/);
     if (!pm) return null;
     var art = articulationFor(pm[1]);
     if (!art) return null;
-    usedNames[art.name] = art.midi;
-    return art.name;
+    var name = art.name, midi = art.midi, effects = '';
+    decs.forEach(function (d) {
+      var r = decorationEffect(d, name);
+      if (r.overrideName) { name = r.overrideName; midi = r.overrideMidi; }
+      if (r.effect) effects += r.effect;
+    });
+    usedNames[name] = midi;
+    return name + effects;
   }
 
   // Hand-written scanner over the V:Hands line. A regex-per-token approach can't
   // handle BOTH chord forms GrooveScribe emits: a normal chord puts the duration
   // INSIDE ([^g4F4], no trailing digit), while the kick+splash literal puts it
   // AFTER ([F^d,]8). The scanner reads an optional trailing duration and falls
-  // back to the first inner note's duration. Task 1 handles chords/notes/rests/
-  // bars/triplets; Tasks 6-7 replace this to add decorations + graces.
+  // back to the first inner note's duration. Task 6 adds decoration parsing;
+  // Task 7 replaces this to add grace emission before the chord/note dispatch.
   function translateHands(line, usedNames) {
     var out = [];
     var tripletLeft = 0;
@@ -74,7 +101,11 @@ var GrooveToGuitarPro = (function () {
       if (ch === '|') { while (line[i] === '|') i++; out.push('|'); continue; }
       var rm = /^z(\d+)/.exec(line.slice(i));
       if (rm) { emit('r.' + durFromUnits(+rm[1])); i += rm[0].length; continue; }
-      if (ch === '[') {                            // chord
+      // leading decorations (moved-out effects; grace handling added in Task 7)
+      var leading = [], dm;
+      while ((dm = /^(!\(\.!!\)\.!|![^!]*!|\{\/c+\})/.exec(line.slice(i)))) { leading.push(dm[1]); i += dm[1].length; }
+      var movedEffects = leading.filter(function (d) { return LEADING_DECORATIONS.indexOf(d) !== -1; });
+      if (line[i] === '[') {                        // chord
         var end = line.indexOf(']', i);
         if (end === -1) { i++; continue; }         // malformed: no closing bracket — skip, never loop forever
         var innerStr = line.slice(i + 1, end);
@@ -82,20 +113,22 @@ var GrooveToGuitarPro = (function () {
         var units;
         var trailing = /^(\d+)/.exec(line.slice(i));
         if (trailing) { units = +trailing[1]; i += trailing[0].length; }
-        var innerNotes = innerStr.match(/\^?[A-Ga-g][,']*\d*/g) || [];
+        var innerNotes = innerStr.match(/(?:!\(\.!!\)\.!|![^!]*!)*\^?[A-Ga-g][,']*\d*/g) || [];
         if (units === undefined) {
           var fd = innerNotes[0] && innerNotes[0].match(/(\d+)$/);
           units = fd ? +fd[1] : 8;
         }
         var names = innerNotes.map(function (seg) {
-          return resolveNote(seg.replace(/\d+$/, ''), usedNames, []);
+          return resolveNote(seg.replace(/\d+$/, ''), usedNames, movedEffects);
         }).filter(Boolean);
         emit('(' + names.join(' ') + ').' + durFromUnits(units));
-      } else {                                     // single note
+      } else {                                      // single note
         var nm = /^(\^?[A-Ga-g][,']*)(\d+)/.exec(line.slice(i));
         if (!nm) { i++; continue; }
         i += nm[0].length;
-        var one = resolveNote(nm[1], usedNames, []);
+        // For single notes, pass all leading decorations (including ghost which
+        // stays before a lone note, not inside a chord bracket).
+        var one = resolveNote(nm[1], usedNames, leading);
         emit((one || 'r') + '.' + durFromUnits(+nm[2]));
       }
     }
