@@ -1,10 +1,12 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import vm from 'node:vm';
 import { createRequire } from 'node:module';
+import { execSync } from 'node:child_process';
+import { tmpdir } from 'node:os';
 
 const require = createRequire(import.meta.url);
 // IMPORTANT: require alphaTab BEFORE the window shim below. alphaTab's bundle runs
@@ -254,6 +256,38 @@ test('backbeat flam (snare flam + hi-hat) emits the grace before the chord', () 
   const graces = score.tracks[0].staves[0].bars[0].voices[0].beats
     .filter(b => b.graceType && b.graceType !== alphaTab.model.GraceType.None);
   assert.equal(graces.length, 2, 'two backbeat flams -> two grace beats');
+});
+
+// extract all <FreeText> CDATA values from an exported .gp (unzip the gpif)
+function gpifFreeTexts(bytes) {
+  const f = join(tmpdir(), 'gp_test_' + Date.now() + '.gp');
+  writeFileSync(f, Buffer.from(bytes));
+  const xml = execSync(`unzip -p ${f} "Content/score.gpif" 2>/dev/null || unzip -p ${f} "*.gpif"`, { encoding: 'latin1', maxBuffer: 1e8 });
+  return [...xml.matchAll(/<FreeText><!\[CDATA\[([^\]]*)\]\]><\/FreeText>/g)].map(m => m[1]);
+}
+
+test('R/L/B stickings export as FreeText on a second voice', () => {
+  const gd = grooveFromUrl('TimeSig=4/4&Div=16&H=|----------------|&S=|oooooooooooooooo|&Stickings=|rlrlrlrlrlrlrlrl|&measures=1');
+  const bytes = GrooveToGuitarPro.createGpData(gd, gu, alphaTab);
+  const texts = gpifFreeTexts(bytes);
+  assert.ok(texts.includes('R') && texts.includes('L'), 'R and L present');
+  // drum voice durations are untouched by the sticking voice
+  const { score } = importTex(GrooveToGuitarPro.createAlphaTex(gd, gu));
+  assert.deepEqual(beatDurations(score), abcHandsExpectedDurations(gd));
+});
+
+test('counting mode preserves sub-beat counts (1 e & a) via the 2nd voice', () => {
+  const gd = grooveFromUrl('TimeSig=4/4&Div=16&H=|x-x-x-x-x-x-x-x-|&S=|----o-------o---|&K=|o-------o-------|&Stickings=|cccccccccccccccc|&measures=1');
+  const bytes = GrooveToGuitarPro.createGpData(gd, gu, alphaTab);
+  const texts = gpifFreeTexts(bytes);
+  assert.deepEqual(texts, ['1','e','&','a','2','e','&','a','3','e','&','a','4','e','&','a']);
+});
+
+test('stickings OFF adds no second voice', () => {
+  const gd = grooveFromUrl('TimeSig=4/4&Div=16&H=|x-x-x-x-x-x-x-x-|&S=|----o-------o---|&K=|o-------o-------|&measures=1');
+  const beats = GrooveToGuitarPro.createStickingVoice(gd, gu);
+  // returns one entry per measure; with no annotations every entry is null/empty
+  assert.ok(beats.every(measure => measure.every(b => !b.text)), 'no text beats');
 });
 
 test('title with a double-quote does not break the export', () => {

@@ -175,12 +175,59 @@ var GrooveToGuitarPro = (function () {
     return header + music + '\n';
   }
 
+  // Extract the V:Stickings music line from full ABC (after the percussion clef).
+  function extractStickingsMusic(abc) {
+    var clefIdx = abc.indexOf('K:C clef=perc');
+    if (clefIdx === -1) return '';
+    var afterClef = abc.slice(clefIdx);
+    var m = afterClef.match(/V:Stickings[^\n]*\n([\s\S]*?)(?:\nV:|\nT:|$)/);
+    return m ? m[1].replace(/\n/g, ' ').trim() : '';
+  }
+
+  // -> array of measures; each measure is an array of { durationValue, text }.
+  // text is '' when the slot carries no annotation.
+  function createStickingVoice(grooveData, grooveUtils) {
+    var gd = Object.assign({}, grooveData);
+    gd.showLegend = false;
+    var abc = grooveUtils.createABCFromGrooveData(gd, 800);
+    var line = extractStickingsMusic(abc);
+    var measures = [[]];
+    // optional "text" annotation, then x<dur> (hidden rest); bars split measures
+    var re = /("(?:[^"]*)")?\s*x(\d+)|\|+/g;
+    var tok;
+    while ((tok = re.exec(line))) {
+      if (/^\|+$/.test(tok[0])) { measures.push([]); continue; }
+      var text = tok[1] ? escapeAlphaTex(tok[1].slice(1, -1)) : '';
+      measures[measures.length - 1].push({ durationValue: durFromUnits(+tok[2]), text: text });
+    }
+    // drop a trailing empty measure produced by the closing ||
+    if (measures.length && measures[measures.length - 1].length === 0) measures.pop();
+    return measures;
+  }
+
   function createGpData(grooveData, grooveUtils, alphaTab) {
     var tex = createAlphaTex(grooveData, grooveUtils);
     var settings = new alphaTab.Settings();
     var importer = new alphaTab.importer.AlphaTexImporter();
     importer.initFromString(tex, settings, null);
     var score = importer.readScore();
+
+    var stickings = createStickingVoice(grooveData, grooveUtils);
+    var hasText = stickings.some(function (m) { return m.some(function (b) { return b.text; }); });
+    if (hasText) {
+      var bars = score.tracks[0].staves[0].bars;
+      for (var i = 0; i < bars.length && i < stickings.length; i++) {
+        var voice = new alphaTab.model.Voice();
+        bars[i].addVoice(voice);
+        stickings[i].forEach(function (desc) {
+          var beat = new alphaTab.model.Beat();
+          beat.duration = desc.durationValue;          // enum value == 32/units
+          if (desc.text) beat.text = desc.text;        // FreeText; no notes -> rest
+          voice.addBeat(beat);
+        });
+      }
+      score.finish(settings);
+    }
     return new alphaTab.exporter.Gp7Exporter().export(score, settings);
   }
 
@@ -188,6 +235,7 @@ var GrooveToGuitarPro = (function () {
     ARTICULATION_MAP: ARTICULATION_MAP,
     escapeAlphaTex: escapeAlphaTex,
     createAlphaTex: createAlphaTex,
+    createStickingVoice: createStickingVoice,
     createGpData: createGpData,
   };
 })();
