@@ -167,6 +167,8 @@ const articulationCases = [
   ['clickAccent','H=|N---------------|', 'ClickAccent'],
   ['crossStick','S=|x---------------|', 'SideStick'],
   ['tom1',      'T1=|o---------------|', 'Tom1'],
+  ['tom2',      'T2=|o---------------|', 'Tom2'],
+  ['tom3',      'T3=|o---------------|', 'Tom3'],
   ['tom4',      'T4=|o---------------|', 'Tom4'],
 ];
 for (const [name, row, expected] of articulationCases) {
