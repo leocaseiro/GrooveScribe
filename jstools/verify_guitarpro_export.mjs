@@ -141,6 +141,15 @@ test('7/8 time signature', () => {
   assert.equal(score.masterBars[0].timeSignatureDenominator, 8);
 });
 
+test('triplet grid emits tuplets', () => {
+  const gd = grooveFromUrl('TimeSig=4/4&Div=12&H=|xxxxxxxxxxxx|&S=|------------|&K=|o--o--o--o--|&measures=1');
+  const { score } = importTex(GrooveToGuitarPro.createAlphaTex(gd, gu));
+  const beats = score.tracks[0].staves[0].bars[0].voices[0].beats;
+  assert.equal(beats.length, 12, '12 triplet eighths');
+  assert.ok(beats.every(b => b.tupletNumerator === 3), 'every beat is part of a 3-tuplet');
+  assert.deepEqual(beatDurations(score), abcHandsExpectedDurations(gd));
+});
+
 test('rock beat: chords + eighths import and export', () => {
   const gd = grooveFromUrl('TimeSig=4/4&Div=16&H=|x-x-x-x-x-x-x-x-|&S=|----o-------o---|&K=|o-------o-------|&measures=1');
   const tex = GrooveToGuitarPro.createAlphaTex(gd, gu);
