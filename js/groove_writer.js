@@ -2599,42 +2599,19 @@ function GrooveWriter() {
 	// ALPHATAB_SRI here (openssl dgst -sha384 -binary <file> | openssl base64 -A).
 	var ALPHATAB_CDN_URL = 'https://cdn.jsdelivr.net/npm/@coderline/alphatab@1.8.3/dist/alphaTab.min.js';
 	var ALPHATAB_SRI = 'sha384-qUm2Zrf12JTeEmtMQAdvtbVFGrxkxSSrmqyEU4avNOo/QxYnmgpDsfsdWvYrhmxw';
-	var _alphaTabPendingLoad = [];
-	var _alphaTabPendingError = [];
 
 	// Lazy-load alphaTab from the CDN exactly once. Only the importer + exporter
 	// are used (no AlphaTabApi), so no Web Worker, audio, or font assets load.
-	function loadAlphaTab(onLoad, onError) {
-		if (window.alphaTab && window.alphaTab.importer && window.alphaTab.importer.AlphaTexImporter) {
-			onLoad(window.alphaTab);
-			return;
-		}
-		_alphaTabPendingLoad.push(onLoad);
-		_alphaTabPendingError.push(onError);
-		if (document.getElementById('alphaTabScript')) return; // injection already in flight
-
-		var script = document.createElement('script');
-		script.id = 'alphaTabScript';
-		script.src = ALPHATAB_CDN_URL;
-		script.integrity = ALPHATAB_SRI;
-		script.crossOrigin = 'anonymous';
-		script.onload = function () {
-			if (window.alphaTab && window.alphaTab.importer && window.alphaTab.importer.AlphaTexImporter) {
-				var cbs = _alphaTabPendingLoad; _alphaTabPendingLoad = []; _alphaTabPendingError = [];
-				cbs.forEach(function (cb) { cb(window.alphaTab); });
-			} else {
-				script.remove(); // reset so a later click can retry
-				var errs = _alphaTabPendingError; _alphaTabPendingLoad = []; _alphaTabPendingError = [];
-				errs.forEach(function (cb) { cb(new Error('alphaTab loaded but API missing')); });
-			}
-		};
-		script.onerror = function () {
-			script.remove(); // reset so a later click can retry
-			var errs = _alphaTabPendingError; _alphaTabPendingLoad = []; _alphaTabPendingError = [];
-			errs.forEach(function (cb) { cb(new Error('Failed to load alphaTab')); });
-		};
-		document.head.appendChild(script);
-	}
+	// The loader logic lives in js/alphatab_loader.js (loaded before this file in
+	// index.html) so it can be unit-tested with stubbed doc/win/timers. It also
+	// runs a 15s timeout watchdog so a stalled CDN socket can't hang export
+	// callbacks forever or wedge the in-flight guard against future retries.
+	var loadAlphaTab = createAlphaTabLoader({
+		doc: document,
+		win: window,
+		url: ALPHATAB_CDN_URL,
+		sri: ALPHATAB_SRI
+	});
 
 	function sanitizeFilename(name) {
 		var n = (name || '').replace(/[\/\\:*?"<>|]/g, '').trim();
