@@ -154,6 +154,36 @@ test('triplet grid emits tuplets', () => {
   assert.deepEqual(beatDurations(score), abcHandsExpectedDurations(gd));
 });
 
+const articulationCases = [
+  // url params (H/S/K rows), expected articulation name on beat 0
+  ['ride',      'H=|r---------------|', 'Ride'],
+  ['rideBell',  'H=|b---------------|', 'RideBell'],
+  ['cowbell',   'H=|m---------------|', 'Cowbell'],
+  ['crash',     'H=|c---------------|', 'Crash'],
+  ['stacker',   'H=|s---------------|', 'China'],
+  ['click',     'H=|n---------------|', 'Click'],
+  ['clickAccent','H=|N---------------|', 'ClickAccent'],
+  ['crossStick','S=|x---------------|', 'SideStick'],
+  ['tom1',      'T1=|o---------------|', 'Tom1'],
+  ['tom4',      'T4=|o---------------|', 'Tom4'],
+];
+for (const [name, row, expected] of articulationCases) {
+  test(`articulation maps: ${name} -> ${expected}`, () => {
+    const gd = grooveFromUrl(`TimeSig=4/4&Div=16&${row}&measures=1`);
+    const tex = GrooveToGuitarPro.createAlphaTex(gd, gu);
+    assert.match(tex, new RegExp(`\\\\articulation ${expected} \\d+`), `declares ${expected}`);
+    assert.ok(tex.includes(expected), `uses ${expected} in music`);
+  });
+}
+
+// NOTE: isolate with explicit empty H/S rows — a bare `K=|X…|` makes GrooveScribe
+// inject its DEFAULT hi-hat pattern, turning beat 0 into a 3-note chord.
+test('kick + splash exports as a 2-note chord (Kick + HiHatPedal)', () => {
+  const gd = grooveFromUrl('TimeSig=4/4&Div=16&H=|----------------|&S=|----------------|&K=|X-------X-------|&measures=1');
+  const { score } = importTex(GrooveToGuitarPro.createAlphaTex(gd, gu));
+  assert.equal(score.tracks[0].staves[0].bars[0].voices[0].beats[0].notes.length, 2);
+});
+
 test('rock beat: chords + eighths import and export', () => {
   const gd = grooveFromUrl('TimeSig=4/4&Div=16&H=|x-x-x-x-x-x-x-x-|&S=|----o-------o---|&K=|o-------o-------|&measures=1');
   const tex = GrooveToGuitarPro.createAlphaTex(gd, gu);

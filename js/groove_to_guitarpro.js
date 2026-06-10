@@ -8,9 +8,22 @@ var GrooveToGuitarPro = (function () {
   // (decorations like !accent! / !open! are handled separately in resolveArticulation).
   // Grows in Task 5. Rock beat needs only these three.
   var ARTICULATION_MAP = {
-    '^g': { name: 'HiHat', midi: 42 },
-    'c':  { name: 'Snare', midi: 38 },
-    'F':  { name: 'Kick',  midi: 36 },
+    '^g':   { name: 'HiHat',       midi: 42 }, // hi-hat normal / close / accent (decoration handled in Task 6)
+    '^A\'': { name: 'Ride',        midi: 51 },
+    '^B\'': { name: 'RideBell',    midi: 53 },
+    '^D\'': { name: 'Cowbell',     midi: 56 },
+    '^c\'': { name: 'Crash',       midi: 49 },
+    '^d\'': { name: 'China',       midi: 52 }, // stacker (approx)
+    '^e\'': { name: 'Click',       midi: 77 }, // metronome normal
+    '^f\'': { name: 'ClickAccent', midi: 76 }, // metronome accent
+    'c':    { name: 'Snare',       midi: 38 },
+    '^c':   { name: 'SideStick',   midi: 37 }, // cross-stick
+    'F':    { name: 'Kick',        midi: 36 },
+    '^d,':  { name: 'HiHatPedal',  midi: 44 }, // foot splash (approx)
+    'e':    { name: 'Tom1',        midi: 48 },
+    'd':    { name: 'Tom2',        midi: 47 },
+    'B':    { name: 'Tom3',        midi: 45 },
+    'A':    { name: 'Tom4',        midi: 43 },
   };
 
   // alphaTex duration number = 32 / abc_units (ABC is L:1/32).
