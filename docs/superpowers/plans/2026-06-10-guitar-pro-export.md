@@ -42,8 +42,8 @@ These exact strings are the test oracle. (`V:Hands` line only; `kickStemsUp=true
 | Ride/Bell/Crash/Cowbell/Stacker `H=\|r-b-c-m-s-…\|` | `^A'4^B'4 ^c'4^D'4 ^d'4^A'4 ^B'4^c'4 \|\|` |
 | Click `H=\|n-N-…\|` | `^e'4^f'4 ^e'4^f'4 …` |
 | Toms `T1=\|o---o-…\|&T4=\|--------o---o---\|` | `e8 e8 A8 A8 \|\|` |
-| 3/4 `TimeSig=3/4` | `[^g4F4]^g4 [c4^g4]^g4 [^g4F4]^g4 z8 \|\|` |
-| 7/8 `TimeSig=7/8` | `[^g4F4]^g4 ^g4^g4 ^g4^g4 ^g8 \|\|` |
+| 3/4 `?TimeSig=3/4` | `[^g4F4]^g4 [c4^g4]^g4 [^g4F4]^g4 \|\|` (6 eighths) |
+| 7/8 `?TimeSig=7/8` | `[^g4F4]^g4 ^g4^g4 ^g4^g4 ^g4\|\|` (7 eighths) |
 | Counting stickings (`V:Stickings` line) | `"1"x2"e"x2"&"x2"a"x2 "2"x2"e"x2"&"x2"a"x2 …` |
 | R/L/B stickings (`V:Stickings` line) | `"R"x2"L"x2"R"x2"L"x2 …` |
 | Empty groove | `z8 z8 z8 z8 \|\|` |
@@ -183,7 +183,11 @@ const { GrooveUtils, GrooveToGuitarPro } = loadGrooveScribe();
 const gu = new GrooveUtils();
 
 // --- helpers shared by all tests ---
-export function grooveFromUrl(url) { return gu.getGrooveDataFromUrlString(url); }
+// getGrooveDataFromUrlString does my_string.substring(1) (it expects a leading '?'
+// like location.search). Without it, the FIRST param loses its leading char —
+// "TimeSig=3/4" becomes "imeSig=3/4" and silently falls back to 4/4. Prepend '?'
+// when absent so non-4/4 fixtures are actually exercised, not vacuously passing.
+export function grooveFromUrl(url) { return gu.getGrooveDataFromUrlString(url[0] === '?' ? url : '?' + url); }
 
 export function importTex(tex) {
   const settings = new alphaTab.Settings();
