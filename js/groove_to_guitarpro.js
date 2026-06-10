@@ -41,6 +41,15 @@ var GrooveToGuitarPro = (function () {
 
   function articulationFor(pitch) { return ARTICULATION_MAP[pitch] || null; }
 
+  // Warn once per unknown pitch (observability, no behavior change).
+  var _warnedPitches = {};
+  function warnUnknownPitch(pitch) {
+    if (!_warnedPitches[pitch]) {
+      _warnedPitches[pitch] = true;
+      if (typeof console !== 'undefined') console.warn('[GuitarPro export] unsupported articulation, skipped:', pitch);
+    }
+  }
+
   // Escape user-controlled strings for safe interpolation into alphaTex quoted fields.
   // An unescaped '"' throws UnsupportedFormatError and aborts the entire export (F4).
   function escapeAlphaTex(str) {
@@ -78,7 +87,7 @@ var GrooveToGuitarPro = (function () {
     var pm = rest.match(/^(\^?[A-Ga-g][,']*)/);
     if (!pm) return null;
     var art = articulationFor(pm[1]);
-    if (!art) return null;
+    if (!art) { warnUnknownPitch(pm[1]); return null; }
     var name = art.name, midi = art.midi, effects = '';
     decs.forEach(function (d) {
       var r = decorationEffect(d, name);

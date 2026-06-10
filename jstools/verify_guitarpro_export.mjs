@@ -290,6 +290,15 @@ test('stickings OFF adds no second voice', () => {
   assert.ok(beats.every(measure => measure.every(b => !b.text)), 'no text beats');
 });
 
+test('empty groove produces a valid one-bar rest and never throws', () => {
+  const gd = grooveFromUrl('TimeSig=4/4&Div=16&H=|----------------|&S=|----------------|&K=|----------------|&measures=1');
+  const tex = GrooveToGuitarPro.createAlphaTex(gd, gu);
+  const { score } = importTex(tex);
+  assert.equal(score.tracks[0].staves[0].bars.length, 1);
+  const bytes = GrooveToGuitarPro.createGpData(gd, gu, alphaTab);
+  assert.ok(bytes.length > 100);
+});
+
 test('title with a double-quote does not break the export', () => {
   const gd = grooveFromUrl('TimeSig=4/4&Div=16&H=|x-x-x-x-x-x-x-x-|&S=|----o-------o---|&K=|o-------o-------|&measures=1&Title=My "Cool" Beat');
   gd.title = 'My "Cool" Beat';   // belt-and-suspenders (URL decode may strip)
