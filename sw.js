@@ -1,4 +1,4 @@
-var version = '1.2.2';
+var version = '1.2.3';
 var timeStamp = Date.now();
 var coreID = 'leocaseiro.github.io' + version;
 var cacheIDs = [coreID];
@@ -6,37 +6,41 @@ var cacheIDs = [coreID];
 self.addEventListener('install', function(e) {
   e.waitUntil(
     caches.open(coreID).then(function(cache) {
+      // Precache the app shell. Paths are relative to this sw.js (the app root),
+      // so they resolve on BOTH GitHub Pages (/GrooveScribe/) and a local server
+      // at the domain root (e.g. http://127.0.0.1:3000/). Absolute /GrooveScribe/
+      // paths 404 locally, which rejects addAll and blocks SW install entirely.
       return cache.addAll([
-        '/GrooveScribe/?timestamp=' + timeStamp,
-        '/GrooveScribe/index.html?timestamp=' + timeStamp,
-        '/GrooveScribe/css/groove_display_orange.css?timestamp=' + timeStamp,
-        '/GrooveScribe/css/groove_writer_orange.css?timestamp=' + timeStamp,
-        '/GrooveScribe/css/share-button.min.css?timestamp=' + timeStamp,
-        '/GrooveScribe/font-awesome/4.7.0/css/font-awesome.min.css?timestamp=' + timeStamp,
-        '/GrooveScribe/font-awesome/4.7.0/fonts/fontawesome-webfont.woff2?v=4.7.0?timestamp=' + timeStamp,
-        '/GrooveScribe/images/GScribe_Logo_lone_g.svg?timestamp=' + timeStamp,
-        '/GrooveScribe/images/GScribe_Logo_word_stack.svg?timestamp=' + timeStamp,
-        '/GrooveScribe/images/gscribe-icon-96.png?timestamp=' + timeStamp,
-        '/GrooveScribe/js/abc2svg-1.js?timestamp=' + timeStamp,
-        '/GrooveScribe/js/groove_utils.js?timestamp=' + timeStamp,
-        '/GrooveScribe/js/groove_to_guitarpro.js?timestamp=' + timeStamp,
-        '/GrooveScribe/js/groove_practices.js?timestamp=' + timeStamp,
-        '/GrooveScribe/js/groove_writer.js?timestamp=' + timeStamp,
-        '/GrooveScribe/js/grooves.js?timestamp=' + timeStamp,
-        '/GrooveScribe/js/jsmidgen.js?timestamp=' + timeStamp,
-        '/GrooveScribe/js/pablo.min.js?timestamp=' + timeStamp,
-        '/GrooveScribe/js/share-button.min.js?timestamp=' + timeStamp,
-        '/GrooveScribe/MIDI.js/inc/Base64.js?timestamp=' + timeStamp,
-        '/GrooveScribe/MIDI.js/inc/base64binary.js?timestamp=' + timeStamp,
-        '/GrooveScribe/MIDI.js/inc/DOMLoader.XMLHttp.js?timestamp=' + timeStamp,
-        '/GrooveScribe/MIDI.js/inc/jasmid/midifile.js?timestamp=' + timeStamp,
-        '/GrooveScribe/MIDI.js/inc/jasmid/replayer.js?timestamp=' + timeStamp,
-        '/GrooveScribe/MIDI.js/inc/jasmid/stream.js?timestamp=' + timeStamp,
-        '/GrooveScribe/MIDI.js/js/MIDI/AudioDetect.js?timestamp=' + timeStamp,
-        '/GrooveScribe/MIDI.js/js/MIDI/LoadPlugin.js?timestamp=' + timeStamp,
-        '/GrooveScribe/MIDI.js/js/MIDI/Player.js?timestamp=' + timeStamp,
-        '/GrooveScribe/MIDI.js/js/MIDI/Plugin.js?timestamp=' + timeStamp,
-        '/GrooveScribe/soundfont/gunshot-ogg.js?timestamp=' + timeStamp,
+        './?timestamp=' + timeStamp,
+        './index.html?timestamp=' + timeStamp,
+        './css/groove_display_orange.css?timestamp=' + timeStamp,
+        './css/groove_writer_orange.css?timestamp=' + timeStamp,
+        './css/share-button.min.css?timestamp=' + timeStamp,
+        './font-awesome/4.7.0/css/font-awesome.min.css?timestamp=' + timeStamp,
+        './font-awesome/4.7.0/fonts/fontawesome-webfont.woff2?v=4.7.0?timestamp=' + timeStamp,
+        './images/GScribe_Logo_lone_g.svg?timestamp=' + timeStamp,
+        './images/GScribe_Logo_word_stack.svg?timestamp=' + timeStamp,
+        './images/gscribe-icon-96.png?timestamp=' + timeStamp,
+        './js/abc2svg-1.js?timestamp=' + timeStamp,
+        './js/groove_utils.js?timestamp=' + timeStamp,
+        './js/groove_to_guitarpro.js?timestamp=' + timeStamp,
+        './js/groove_practices.js?timestamp=' + timeStamp,
+        './js/groove_writer.js?timestamp=' + timeStamp,
+        './js/grooves.js?timestamp=' + timeStamp,
+        './js/jsmidgen.js?timestamp=' + timeStamp,
+        './js/pablo.min.js?timestamp=' + timeStamp,
+        './js/share-button.min.js?timestamp=' + timeStamp,
+        './MIDI.js/inc/Base64.js?timestamp=' + timeStamp,
+        './MIDI.js/inc/base64binary.js?timestamp=' + timeStamp,
+        './MIDI.js/inc/DOMLoader.XMLHttp.js?timestamp=' + timeStamp,
+        './MIDI.js/inc/jasmid/midifile.js?timestamp=' + timeStamp,
+        './MIDI.js/inc/jasmid/replayer.js?timestamp=' + timeStamp,
+        './MIDI.js/inc/jasmid/stream.js?timestamp=' + timeStamp,
+        './MIDI.js/js/MIDI/AudioDetect.js?timestamp=' + timeStamp,
+        './MIDI.js/js/MIDI/LoadPlugin.js?timestamp=' + timeStamp,
+        './MIDI.js/js/MIDI/Player.js?timestamp=' + timeStamp,
+        './MIDI.js/js/MIDI/Plugin.js?timestamp=' + timeStamp,
+        './soundfont/gunshot-ogg.js?timestamp=' + timeStamp,
       ])
       .then(function() {
         return self.skipWaiting();
@@ -70,7 +74,7 @@ self.addEventListener('fetch', function(event) {
       caches.open(coreID).then(function(cache) {
         return cache.match(event.request).then(function(cached) {
           return cached || fetch(event.request).then(function(response) {
-            cache.put(event.request, response.clone());
+            if (response.ok) cache.put(event.request, response.clone());
             return response;
           });
         });
