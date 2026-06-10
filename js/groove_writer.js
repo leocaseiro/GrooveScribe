@@ -2594,6 +2594,9 @@ function GrooveWriter() {
 	};
 
 	// --- Guitar Pro export -------------------------------------------------
+	// NOTE: ALPHATAB_CDN_URL is duplicated in sw.js (a service worker can't import
+	// app code). When bumping the alphaTab version, update BOTH files — and recompute
+	// ALPHATAB_SRI here (openssl dgst -sha384 -binary <file> | openssl base64 -A).
 	var ALPHATAB_CDN_URL = 'https://cdn.jsdelivr.net/npm/@coderline/alphatab@1.8.3/dist/alphaTab.min.js';
 	var ALPHATAB_SRI = 'sha384-qUm2Zrf12JTeEmtMQAdvtbVFGrxkxSSrmqyEU4avNOo/QxYnmgpDsfsdWvYrhmxw';
 	var _alphaTabPendingLoad = [];

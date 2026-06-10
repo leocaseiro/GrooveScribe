@@ -57,6 +57,9 @@ self.addEventListener('activate', function (event) {
 	}));
 });
 
+// NOTE: keep this URL in sync with ALPHATAB_CDN_URL in js/groove_writer.js (also bump
+// the SRI there). A version mismatch silently breaks offline export (SW caches a URL
+// the app never requests).
 var ALPHATAB_CDN_URL = 'https://cdn.jsdelivr.net/npm/@coderline/alphatab@1.8.3/dist/alphaTab.min.js';
 
 self.addEventListener('fetch', function(event) {
