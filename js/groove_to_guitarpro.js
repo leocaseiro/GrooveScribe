@@ -1,0 +1,127 @@
+// Guitar Pro export generator. Translates GrooveScribe's ABC (V:Hands line)
+// into alphaTex, then (in the browser) hands it to alphaTab to write a .gp file.
+// No DOM access — `alphaTab` is injected so this module never reaches for a global.
+var GrooveToGuitarPro = (function () {
+  'use strict';
+
+  // ABC pitch token -> { name, midi }. Keys are the constant_ABC_* pitch values
+  // (decorations like !accent! / !open! are handled separately in resolveArticulation).
+  // Grows in Task 5. Rock beat needs only these three.
+  var ARTICULATION_MAP = {
+    '^g': { name: 'HiHat', midi: 42 },
+    'c':  { name: 'Snare', midi: 38 },
+    'F':  { name: 'Kick',  midi: 36 },
+  };
+
+  // alphaTex duration number = 32 / abc_units (ABC is L:1/32).
+  function durFromUnits(units) { return 32 / units; }
+
+  // Extract the V:Hands music (across measures) from full ABC, skipping the
+  // optional on-screen legend (which also contains a V:Hands line in the header).
+  function extractHandsMusic(abc) {
+    var clefIdx = abc.indexOf('K:C clef=perc');
+    if (clefIdx === -1) return '';                 // unexpected ABC shape — fail closed, don't slice(-1)
+    var afterClef = abc.slice(clefIdx);
+    var m = afterClef.match(/V:Hands[^\n]*\n%%voicemap drum\n([\s\S]*?)(?:\nV:|\nT:|$)/);
+    return m ? m[1].replace(/\n/g, ' ').trim() : '';
+  }
+
+  function articulationFor(pitch) { return ARTICULATION_MAP[pitch] || null; }
+
+  // Resolve one ABC pitch segment to an alphaTex articulation name.
+  // Task 1: pitch only. Task 6 replaces this to also handle decorations (the
+  // third `extraDecs` param). Returns null for unknown pitches.
+  function resolveNote(seg, usedNames, extraDecs) {
+    var pm = seg.match(/^(\^?[A-Ga-g][,']*)/);
+    if (!pm) return null;
+    var art = articulationFor(pm[1]);
+    if (!art) return null;
+    usedNames[art.name] = art.midi;
+    return art.name;
+  }
+
+  // Hand-written scanner over the V:Hands line. A regex-per-token approach can't
+  // handle BOTH chord forms GrooveScribe emits: a normal chord puts the duration
+  // INSIDE ([^g4F4], no trailing digit), while the kick+splash literal puts it
+  // AFTER ([F^d,]8). The scanner reads an optional trailing duration and falls
+  // back to the first inner note's duration. Task 1 handles chords/notes/rests/
+  // bars/triplets; Tasks 6-7 replace this to add decorations + graces.
+  function translateHands(line, usedNames) {
+    var out = [];
+    var tripletLeft = 0;
+    var i = 0, n = line.length;
+    function emit(beat) {
+      if (tripletLeft > 0) { beat += ' {tu 3}'; tripletLeft--; }
+      out.push(beat);
+    }
+    while (i < n) {
+      var ch = line[i];
+      if (ch === ' ' || ch === '\t') { i++; continue; }
+      if (line.startsWith('(3:3:3', i)) { tripletLeft = 3; i += 6; continue; }
+      if (ch === '|') { while (line[i] === '|') i++; out.push('|'); continue; }
+      var rm = /^z(\d+)/.exec(line.slice(i));
+      if (rm) { emit('r.' + durFromUnits(+rm[1])); i += rm[0].length; continue; }
+      if (ch === '[') {                            // chord
+        var end = line.indexOf(']', i);
+        if (end === -1) { i++; continue; }         // malformed: no closing bracket — skip, never loop forever
+        var innerStr = line.slice(i + 1, end);
+        i = end + 1;
+        var units;
+        var trailing = /^(\d+)/.exec(line.slice(i));
+        if (trailing) { units = +trailing[1]; i += trailing[0].length; }
+        var innerNotes = innerStr.match(/\^?[A-Ga-g][,']*\d*/g) || [];
+        if (units === undefined) {
+          var fd = innerNotes[0] && innerNotes[0].match(/(\d+)$/);
+          units = fd ? +fd[1] : 8;
+        }
+        var names = innerNotes.map(function (seg) {
+          return resolveNote(seg.replace(/\d+$/, ''), usedNames, []);
+        }).filter(Boolean);
+        emit('(' + names.join(' ') + ').' + durFromUnits(units));
+      } else {                                     // single note
+        var nm = /^(\^?[A-Ga-g][,']*)(\d+)/.exec(line.slice(i));
+        if (!nm) { i++; continue; }
+        i += nm[0].length;
+        var one = resolveNote(nm[1], usedNames, []);
+        emit((one || 'r') + '.' + durFromUnits(+nm[2]));
+      }
+    }
+    return out.join(' ');
+  }
+
+  function createAlphaTex(grooveData, grooveUtils) {
+    // never include the on-screen legend in the export
+    var gd = Object.assign({}, grooveData);
+    gd.showLegend = false;
+    var abc = grooveUtils.createABCFromGrooveData(gd, 800);
+    var handsLine = extractHandsMusic(abc);
+
+    var usedNames = {};
+    var music = translateHands(handsLine, usedNames);
+
+    var header = '\\title "' + (gd.title || 'GrooveScribe') + '" \\tempo ' + (gd.tempo || 120) + '\n.\n';
+    header += '\\track "Drums"\n\\instrument percussion \\clef neutral\n';
+    header += '\\ts ' + (gd.numBeats || 4) + ' ' + (gd.noteValue || 4) + '\n';
+    Object.keys(usedNames).forEach(function (name) {
+      header += '\\articulation ' + name + ' ' + usedNames[name] + '\n';
+    });
+    // ensure the line ends with a bar so the importer closes the last measure
+    if (!/\|\s*$/.test(music)) music += ' |';
+    return header + music + '\n';
+  }
+
+  function createGpData(grooveData, grooveUtils, alphaTab) {
+    var tex = createAlphaTex(grooveData, grooveUtils);
+    var settings = new alphaTab.Settings();
+    var importer = new alphaTab.importer.AlphaTexImporter();
+    importer.initFromString(tex, settings, null);
+    var score = importer.readScore();
+    return new alphaTab.exporter.Gp7Exporter().export(score, settings);
+  }
+
+  return {
+    ARTICULATION_MAP: ARTICULATION_MAP,
+    createAlphaTex: createAlphaTex,
+    createGpData: createGpData,
+  };
+})();
