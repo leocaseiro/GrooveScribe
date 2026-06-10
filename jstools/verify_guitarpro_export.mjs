@@ -226,6 +226,36 @@ test('whole-chord accent (HH+SN both accented) applies {ac} to chord notes', () 
   assert.deepEqual(beatDurations(score), abcHandsExpectedDurations(gd));
 });
 
+test('isolated flam emits one grace beat before the main snare', () => {
+  const gd = grooveFromUrl('TimeSig=4/4&Div=16&H=|----------------|&S=|f-------f-------|&K=|----------------|&measures=1');
+  const tex = GrooveToGuitarPro.createAlphaTex(gd, gu);
+  assert.match(tex, /Snare\.8 \{gr bb\} Snare/);
+  const { score } = importTex(tex);
+  const beats = score.tracks[0].staves[0].bars[0].voices[0].beats;
+  const graces = beats.filter(b => b.graceType && b.graceType !== alphaTab.model.GraceType.None);
+  assert.equal(graces.length, 2, 'two flams -> two grace beats');
+});
+
+test('isolated drag emits two grace beats before the main snare', () => {
+  const gd = grooveFromUrl('TimeSig=4/4&Div=16&H=|----------------|&S=|d-------d-------|&K=|----------------|&measures=1');
+  const tex = GrooveToGuitarPro.createAlphaTex(gd, gu);
+  assert.match(tex, /Snare\.8 \{gr bb\} Snare\.8 \{gr bb\} Snare/);
+  const { score } = importTex(tex);
+  const beats = score.tracks[0].staves[0].bars[0].voices[0].beats;
+  const graces = beats.filter(b => b.graceType && b.graceType !== alphaTab.model.GraceType.None);
+  assert.equal(graces.length, 4, 'two drags -> four grace beats');
+});
+
+test('backbeat flam (snare flam + hi-hat) emits the grace before the chord', () => {
+  const gd = grooveFromUrl('TimeSig=4/4&Div=16&H=|x-x-x-x-x-x-x-x-|&S=|f-------f-------|&K=|o-------o-------|&measures=1');
+  const tex = GrooveToGuitarPro.createAlphaTex(gd, gu);
+  assert.match(tex, /Snare\.8 \{gr bb\} \(Snare/);   // grace precedes the chord, not dropped
+  const { score } = importTex(tex);
+  const graces = score.tracks[0].staves[0].bars[0].voices[0].beats
+    .filter(b => b.graceType && b.graceType !== alphaTab.model.GraceType.None);
+  assert.equal(graces.length, 2, 'two backbeat flams -> two grace beats');
+});
+
 test('rock beat: chords + eighths import and export', () => {
   const gd = grooveFromUrl('TimeSig=4/4&Div=16&H=|x-x-x-x-x-x-x-x-|&S=|----o-------o---|&K=|o-------o-------|&measures=1');
   const tex = GrooveToGuitarPro.createAlphaTex(gd, gu);

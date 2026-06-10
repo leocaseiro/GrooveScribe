@@ -84,8 +84,8 @@ var GrooveToGuitarPro = (function () {
   // handle BOTH chord forms GrooveScribe emits: a normal chord puts the duration
   // INSIDE ([^g4F4], no trailing digit), while the kick+splash literal puts it
   // AFTER ([F^d,]8). The scanner reads an optional trailing duration and falls
-  // back to the first inner note's duration. Task 6 adds decoration parsing;
-  // Task 7 replaces this to add grace emission before the chord/note dispatch.
+  // back to the first inner note's duration. Task 7 adds grace emission before
+  // the chord/note dispatch (flam/drag).
   function translateHands(line, usedNames) {
     var out = [];
     var tripletLeft = 0;
@@ -101,10 +101,17 @@ var GrooveToGuitarPro = (function () {
       if (ch === '|') { while (line[i] === '|') i++; out.push('|'); continue; }
       var rm = /^z(\d+)/.exec(line.slice(i));
       if (rm) { emit('r.' + durFromUnits(+rm[1])); i += rm[0].length; continue; }
-      // leading decorations (moved-out effects; grace handling added in Task 7)
+      // leading decorations (moved-out effects + graces)
       var leading = [], dm;
       while ((dm = /^(!\(\.!!\)\.!|![^!]*!|\{\/c+\})/.exec(line.slice(i)))) { leading.push(dm[1]); i += dm[1].length; }
       var movedEffects = leading.filter(function (d) { return LEADING_DECORATIONS.indexOf(d) !== -1; });
+      // graces (flam {/c} / drag {/cc}) — a snare ornament emitted BEFORE the main
+      // beat, whether the main hit is a single note or a chord (backbeat flam + hi-hat).
+      var graceMatch = leading.join('').match(/\{\/(c+)\}/);
+      if (graceMatch) {
+        usedNames['Snare'] = 38;
+        for (var gI = 0; gI < graceMatch[1].length; gI++) out.push('Snare.8 {gr bb}');
+      }
       if (line[i] === '[') {                        // chord
         var end = line.indexOf(']', i);
         if (end === -1) { i++; continue; }         // malformed: no closing bracket — skip, never loop forever
