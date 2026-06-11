@@ -1,0 +1,7 @@
+{
+  "name": "groovescribe",
+  "private": true,
+  "devDependencies": {
+    "@coderline/alphatab": "1.8.3"
+  }
+}
