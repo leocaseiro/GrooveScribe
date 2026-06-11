@@ -2693,6 +2693,78 @@ function GrooveWriter() {
 		document.getElementById("GrooveDB_source").value = DBString;
 	};
 
+	// ---- Read-only "Show AlphaTex" debug panel ------------------------------
+	// alphaTex is the intermediate string the Guitar Pro (.gp) export feeds into
+	// alphaTab. This mirrors updateGrooveDBSource: a live, render-only view of the
+	// current groove that does work only while its panel is visible. All DOM lives
+	// here so js/groove_to_guitarpro.js stays DOM-free.
+	root.updateAlphaTexDisplay = function () {
+		var output = document.getElementById("alphaTexOutput");
+		if (!output || output.style.display == 'none')
+			return; // hidden: nothing to update (same early-return as updateGrooveDBSource)
+
+		var content = document.getElementById("alphaTexContent");
+		if (!content)
+			return;
+
+		// textContent, not innerHTML: display-only, so no HTML-escaping concerns.
+		content.textContent = GrooveToGuitarPro.createAlphaTex(root.grooveDataFromClickableUI(), root.myGrooveUtils);
+	};
+
+	root.toggleAlphaTexDisplay = function () {
+		var output = document.getElementById("alphaTexOutput");
+		if (!output)
+			return;
+
+		var nowVisible = (output.style.display == 'none');
+		output.style.display = nowVisible ? 'block' : 'none';
+
+		// best-effort persistence; private-mode / disabled storage must not throw
+		try {
+			localStorage.setItem("GS_showAlphaTex", nowVisible ? "1" : "0");
+		} catch (e) { /* ignore */ }
+
+		root.updateAlphaTexDisplay(); // fill in on show; no-op on hide
+	};
+
+	root.copyAlphaTexToClipboard = function () {
+		var content = document.getElementById("alphaTexContent");
+		if (!content)
+			return;
+
+		var flashCopied = function () {
+			var btn = document.getElementById("alphaTexCopyButton");
+			if (!btn)
+				return;
+			var prevHTML = btn.innerHTML;
+			btn.innerHTML = '<i class="fa fa-check"></i> Copied';
+			setTimeout(function () { btn.innerHTML = prevHTML; }, 1200);
+		};
+
+		// legacy fallback: select the <pre> contents and execCommand. (copyShareURLToClipboard
+		// can't be reused: that path needs a form field; this is a <pre>.)
+		var legacyCopy = function () {
+			var range = document.createRange();
+			range.selectNodeContents(content);
+			var sel = window.getSelection();
+			sel.removeAllRanges();
+			sel.addRange(range);
+			try { document.execCommand("copy"); } catch (e) { /* ignore */ }
+			sel.removeAllRanges();
+		};
+
+		var text = content.textContent || "";
+		if (navigator.clipboard && navigator.clipboard.writeText) {
+			navigator.clipboard.writeText(text).then(flashCopied, function () {
+				legacyCopy();
+				flashCopied();
+			});
+		} else {
+			legacyCopy();
+			flashCopied();
+		}
+	};
+
 	root.undoCommand = function () {
 		if (class_undo_stack.length > 1) {
 			var undoURL = class_undo_stack.pop();
@@ -2945,6 +3017,7 @@ function GrooveWriter() {
 
 		document.getElementById("ABCsource").value = fullABC;
 		root.updateGrooveDBSource();
+		root.updateAlphaTexDisplay();
 
 		root.myGrooveUtils.midiNoteHasChanged(); // pretty likely the case
 
@@ -3436,6 +3509,18 @@ function GrooveWriter() {
 
 		// get updates when the tempo changes
 		root.myGrooveUtils.tempoChangeCallback = root.tempoChangeCallback
+
+		// restore the persisted "Show AlphaTex" panel, but only when its toggle button
+		// is actually usable. offsetParent is null in view mode and in the GrooveDB embed
+		// (button is display:none there), so we never surface the panel where the user
+		// couldn't toggle it back off.
+		try {
+			var alphaTexButton = document.getElementById("alphaTexButton");
+			if (localStorage.getItem("GS_showAlphaTex") == "1" && alphaTexButton && alphaTexButton.offsetParent !== null) {
+				document.getElementById("alphaTexOutput").style.display = 'block';
+				root.updateAlphaTexDisplay();
+			}
+		} catch (e) { /* storage unavailable: skip restore */ }
 	};
 
 	// called right before the midi reloads for the next replay
