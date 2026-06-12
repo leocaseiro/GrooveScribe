@@ -5076,4 +5076,42 @@ function GrooveWriter() {
 		root.renderMyGroovesList(filter);
 	};
 
+	root.exportGroovesClick = function () {
+		var json = grooveStorage.exportJSON();
+		var dataURL = "data:application/json;charset=utf-8," + encodeURIComponent(json);
+		var a = document.createElement("a");
+		a.href = dataURL;
+		a.download = "groovescribe-my-grooves.json";
+		document.body.appendChild(a);
+		a.click();
+		document.body.removeChild(a);
+	};
+
+	root.importGroovesClick = function () {
+		document.getElementById("myGroovesImportFile").click();
+	};
+
+	root.handleImportFile = function (event) {
+		var file = event.target.files[0];
+		if (!file) return;
+		var reader = new FileReader();
+		reader.onload = function (e) {
+			var statusEl = document.getElementById("myGroovesStatus");
+			try {
+				var result = grooveStorage.importJSON(e.target.result);
+				var msg = result.added + " imported";
+				if (result.cloned > 0) {
+					msg += ", " + result.cloned + " cloned with '(imported)' suffix";
+				}
+				statusEl.textContent = msg + ".";
+				root.renderMyGroovesList(document.getElementById("myGroovesSearchInput").value);
+			} catch (err) {
+				statusEl.textContent = "Error: " + err.message;
+			}
+			event.target.value = "";
+			setTimeout(function () { statusEl.textContent = ""; }, 4000);
+		};
+		reader.readAsText(file);
+	};
+
 } // end of class
