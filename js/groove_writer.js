@@ -2634,9 +2634,7 @@ function GrooveWriter() {
 					player: { enablePlayer: false }
 				};
 				class_alphaTabApi = new alphaTab.AlphaTabApi(target, settings);
-				// Drum stems up (shared with the .gp export). Hook fires on every load,
-				// so re-entry tex() calls keep stems up too.
-				class_alphaTabApi.scoreLoaded.on(function (score) { GrooveToGuitarPro.forceStemsUp(score, alphaTab); });
+				// createAlphaTex emits {beam up} per beat, so the render shows drum stems up.
 				class_alphaTabApi.tex(GrooveToGuitarPro.createAlphaTex(root.grooveDataFromClickableUI(), root.myGrooveUtils));
 			} catch (e) {
 				if (typeof console !== 'undefined') console.error(e);
