@@ -5051,6 +5051,15 @@ function GrooveWriter() {
 		if (!groove) return;
 		root.myGrooveUtils.hideContextMenu(document.getElementById("myGroovesMenu"));
 		root.loadNewGroove(groove.url);
+		// The URL may contain a different title than the stored name (e.g. "Leo (2)"
+		// saved when #tuneTitle was still "Leo"). Always restore from the stored record.
+		var titleEl = document.getElementById("tuneTitle");
+		var authorEl = document.getElementById("tuneAuthor");
+		var commentEl = document.getElementById("tuneComments");
+		if (titleEl) titleEl.value = groove.name;
+		if (authorEl) authorEl.value = groove.artist || "";
+		if (commentEl) commentEl.value = groove.comment || "";
+		root.refresh_ABC();
 	};
 
 	root.editSavedGroove = function (name) {
