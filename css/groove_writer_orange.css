@@ -1589,10 +1589,10 @@
 #gsToast {
 	display: none;
 	position: fixed;
-	bottom: 80px;
+	top: 110px;
 	left: 50%;
 	transform: translateX(-50%);
-	z-index: 9999;
+	z-index: 99999;
 	padding: 10px 20px;
 	border-radius: 5px;
 	font-size: 14px;
