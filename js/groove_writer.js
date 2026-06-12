@@ -4920,7 +4920,7 @@ function GrooveWriter() {
 
 	// ===== My Grooves Feature =====
 
-	root.myGroovesAnchorClick = function (event) {
+	root.myGroovesAnchorClick = function () {
 		var contextMenu = document.getElementById("myGroovesMenu");
 		if (contextMenu) {
 			var anchorPoint = document.getElementById("myGroovesAnchor");
@@ -4929,7 +4929,8 @@ function GrooveWriter() {
 				contextMenu.style.top = (anchorPos.y + anchorPoint.offsetHeight) + "px";
 				contextMenu.style.left = (anchorPos.x + anchorPoint.offsetWidth - 320) + "px";
 			}
-			document.getElementById("myGroovesSearchInput").value = "";
+			var searchInput = document.getElementById("myGroovesSearchInput");
+			if (searchInput) searchInput.value = "";
 			root.renderMyGroovesList("");
 			root.myGrooveUtils.showContextMenu(contextMenu);
 		}
