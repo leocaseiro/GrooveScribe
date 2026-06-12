@@ -19,7 +19,9 @@ var grooveStorage = (function () {
     // Returns all grooves sorted newest-first.
     function getAll() {
         return load().sort(function (a, b) {
-            return new Date(b.savedAt) - new Date(a.savedAt);
+            var aTime = a.savedAt ? new Date(a.savedAt).getTime() : 0;
+            var bTime = b.savedAt ? new Date(b.savedAt).getTime() : 0;
+            return bTime - aTime;
         });
     }
 
@@ -52,18 +54,14 @@ var grooveStorage = (function () {
     }
 
     // Returns a name that doesn't yet exist, by appending (imported), (imported 2), etc.
-    function uniqueImportName(base, grooves) {
+    function uniqueImportName(base, nameSet) {
         var candidate = base + " (imported)";
         var n = 2;
-        while (true) {
-            var found = false;
-            for (var i = 0; i < grooves.length; i++) {
-                if (grooves[i].name === candidate) { found = true; break; }
-            }
-            if (!found) return candidate;
+        while (nameSet[candidate] === true) {
             candidate = base + " (imported " + n + ")";
             n++;
         }
+        return candidate;
     }
 
     // Merges an exported JSON string into the current library.
@@ -75,18 +73,19 @@ var grooveStorage = (function () {
         } catch (e) {
             throw new Error("Invalid JSON");
         }
-        if (!data || !Array.isArray(data.grooves)) {
+        if (!data || !data.grooves || !Array.isArray(data.grooves)) {
             throw new Error("Invalid format: missing grooves array");
         }
         var existing = load();
+        var nameSet = {};
+        for (var j = 0; j < existing.length; j++) {
+            nameSet[existing[j].name] = true;
+        }
         var added = 0;
         var cloned = 0;
         data.grooves.forEach(function (g) {
             if (!g.name || !g.url) return;
-            var hasName = false;
-            for (var i = 0; i < existing.length; i++) {
-                if (existing[i].name === g.name) { hasName = true; break; }
-            }
+            var hasName = nameSet[g.name] === true;
             if (!hasName) {
                 existing.push({
                     name: g.name,
@@ -95,9 +94,10 @@ var grooveStorage = (function () {
                     url: g.url,
                     savedAt: g.savedAt || new Date().toISOString()
                 });
+                nameSet[g.name] = true;
                 added++;
             } else {
-                var cloneName = uniqueImportName(g.name, existing);
+                var cloneName = uniqueImportName(g.name, nameSet);
                 existing.push({
                     name: cloneName,
                     artist: g.artist || "",
@@ -105,6 +105,7 @@ var grooveStorage = (function () {
                     url: g.url,
                     savedAt: new Date().toISOString()
                 });
+                nameSet[cloneName] = true;
                 cloned++;
             }
         });
