@@ -1325,3 +1325,254 @@
 			width: 100% !important;
 		}
 	}
+}
+
+/* ===== My Grooves Feature ===== */
+
+#myGroovesMenu {
+	display: none;
+	position: fixed;
+	z-index: 999;
+	width: 320px;
+	max-height: 420px;
+	overflow: hidden;
+	background: #eeeeee;
+	border: 1px solid #393939;
+	border-radius: 3px;
+}
+
+#myGroovesSearchRow {
+	padding: 8px;
+	border-bottom: 1px solid #ccc;
+	background: #fff;
+}
+
+#myGroovesSearchInput {
+	width: 100%;
+	box-sizing: border-box;
+	padding: 5px 8px;
+	font-size: 13px;
+	border: 1px solid #999;
+	border-radius: 3px;
+}
+
+#myGroovesList {
+	overflow-y: auto;
+	max-height: 260px;
+}
+
+.myGrooveLI {
+	display: flex;
+	align-items: center;
+	padding: 8px 10px;
+	border-bottom: 1px solid #ddd;
+	cursor: pointer;
+}
+
+.myGrooveLI:hover {
+	background: #ddd;
+}
+
+.myGrooveInfo {
+	flex: 1;
+	min-width: 0;
+}
+
+.myGrooveName {
+	font-weight: bold;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	font-size: 13px;
+}
+
+.myGrooveMeta {
+	font-size: 11px;
+	color: #666;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.myGrooveActions {
+	display: flex;
+	gap: 4px;
+	margin-left: 8px;
+	flex-shrink: 0;
+}
+
+.myGrooveActionBtn {
+	cursor: pointer;
+	padding: 3px 6px;
+	border-radius: 3px;
+	color: #555;
+	font-size: 12px;
+}
+
+.myGrooveActionBtn:hover {
+	background: #bbb;
+	color: #000;
+}
+
+.myGrooveDeleteConfirm {
+	padding: 8px 12px;
+	border-bottom: 1px solid #ddd;
+	font-size: 12px;
+	background: #fff5f5;
+	color: #c00;
+}
+
+.myGrooveDeleteConfirm .myGrooveDeleteYes,
+.myGrooveDeleteConfirm .myGrooveDeleteNo {
+	cursor: pointer;
+	text-decoration: underline;
+	margin-left: 8px;
+	font-weight: bold;
+}
+
+.myGroovesEmpty {
+	padding: 20px;
+	text-align: center;
+	color: #888;
+	font-style: italic;
+	font-size: 13px;
+}
+
+#myGroovesFooter {
+	border-top: 1px solid #ccc;
+	padding: 6px 8px;
+	background: #f5f5f5;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px;
+}
+
+.myGroovesFooterBtn {
+	cursor: pointer;
+	padding: 4px 8px;
+	border-radius: 3px;
+	background: #e0e0e0;
+	border: 1px solid #aaa;
+	font-size: 12px;
+	user-select: none;
+}
+
+.myGroovesFooterBtn:hover {
+	background: var(--highlight-color);
+	color: #fff;
+	border-color: var(--highlight-color);
+}
+
+#myGroovesStatus {
+	width: 100%;
+	font-size: 11px;
+	color: #555;
+	padding-top: 2px;
+	min-height: 14px;
+}
+
+/* Save Groove Popup */
+
+#saveGroovePopup {
+	display: none;
+	position: absolute;
+	left: 300px;
+	top: 200px;
+	z-index: 1000;
+	background-color: #fff;
+	width: 360px;
+	padding: 16px;
+	border: solid 2px #999;
+	border-radius: 5px;
+}
+
+#saveGroovePopupClose {
+	float: right;
+	cursor: pointer;
+	color: #999;
+	font-size: 18px;
+}
+
+#saveGroovePopupClose:hover {
+	color: #333;
+}
+
+#saveGroovePopupTitle {
+	font-size: 18px;
+	font-weight: 700;
+	text-align: center;
+	margin-bottom: 16px;
+	margin-right: 20px;
+}
+
+.saveGrooveField {
+	display: flex;
+	align-items: center;
+	margin-bottom: 10px;
+}
+
+.saveGrooveField label {
+	width: 68px;
+	font-weight: bold;
+	font-size: 13px;
+	flex-shrink: 0;
+}
+
+.saveGrooveField input {
+	flex: 1;
+	padding: 5px 8px;
+	font-size: 13px;
+	border: 1px solid #aaa;
+	border-radius: 3px;
+}
+
+#saveGrooveDuplicateWarning {
+	display: none;
+	color: #c06000;
+	font-size: 12px;
+	margin-bottom: 8px;
+	padding: 4px 6px;
+	background: #fff8ee;
+	border-radius: 3px;
+}
+
+#saveGroovePopupButtons {
+	text-align: center;
+	margin-top: 16px;
+	display: flex;
+	gap: 8px;
+	justify-content: center;
+}
+
+#saveGroovePopupButtons button {
+	font-size: 14px;
+	font-weight: 500;
+	border: 0;
+	border-radius: 5px;
+	padding: 6px 14px;
+	cursor: pointer;
+}
+
+#saveGrooveNewBtn {
+	background: var(--highlight-color);
+	color: #fff;
+}
+
+#saveGrooveNewBtn:disabled {
+	background: #ccc;
+	color: #888;
+	cursor: not-allowed;
+}
+
+#saveGrooveReplaceBtn {
+	display: none;
+	background: #e06600;
+	color: #fff;
+}
+
+#saveGrooveCancelBtn {
+	background: #fff;
+	color: #888;
+	border: 1px solid #ccc !important;
+}
+	}
