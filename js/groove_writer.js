@@ -4978,4 +4978,64 @@ function GrooveWriter() {
 		root.renderMyGroovesList(value);
 	};
 
+	root.openSaveGroovePopup = function (name, artist, comment) {
+		document.getElementById("saveGrooveName").value = name || "";
+		document.getElementById("saveGrooveArtist").value = artist || "";
+		document.getElementById("saveGrooveComment").value = comment || "";
+		root.saveGrooveNameChanged();
+		document.getElementById("saveGroovePopup").style.display = "block";
+	};
+
+	root.closeSaveGroovePopup = function () {
+		document.getElementById("saveGroovePopup").style.display = "none";
+	};
+
+	root.saveGrooveNameChanged = function () {
+		var name = (document.getElementById("saveGrooveName").value || "").trim();
+		var exists = name ? grooveStorage.getByName(name) !== null : false;
+		document.getElementById("saveGrooveNewBtn").disabled = !name;
+		document.getElementById("saveGrooveDuplicateWarning").style.display = exists ? "block" : "none";
+		document.getElementById("saveGrooveReplaceBtn").style.display = exists ? "inline-block" : "none";
+	};
+
+	root.saveCurrentGrooveClick = function () {
+		root.myGrooveUtils.hideContextMenu(document.getElementById("myGroovesMenu"));
+		root.openSaveGroovePopup(
+			document.getElementById("tuneTitle").value.trim(),
+			document.getElementById("tuneAuthor").value.trim(),
+			document.getElementById("tuneComments").value.trim()
+		);
+	};
+
+	root.saveAsGrooveClick = function () {
+		root.myGrooveUtils.hideContextMenu(document.getElementById("myGroovesMenu"));
+		root.openSaveGroovePopup(
+			document.getElementById("tuneTitle").value.trim(),
+			document.getElementById("tuneAuthor").value.trim(),
+			document.getElementById("tuneComments").value.trim()
+		);
+	};
+
+	root.confirmSaveGroove = function (action) {
+		var name = (document.getElementById("saveGrooveName").value || "").trim();
+		var artist = (document.getElementById("saveGrooveArtist").value || "").trim();
+		var comment = (document.getElementById("saveGrooveComment").value || "").trim();
+		if (!name) return;
+
+		var groove = { name: name, artist: artist, comment: comment, url: get_FullURLForPage() };
+
+		if (action === "new" && grooveStorage.getByName(name)) {
+			var n = 2;
+			var candidate = name + " (" + n + ")";
+			while (grooveStorage.getByName(candidate)) {
+				n++;
+				candidate = name + " (" + n + ")";
+			}
+			groove.name = candidate;
+		}
+
+		grooveStorage.save(groove);
+		root.closeSaveGroovePopup();
+	};
+
 } // end of class
