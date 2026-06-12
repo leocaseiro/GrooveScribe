@@ -58,6 +58,7 @@
 		<script src="js/groove_practices.js"></script>
 		<!-- alphaTab CDN loader: must load BEFORE groove_writer.js, which calls createAlphaTabLoader() -->
 		<script src="js/alphatab_loader.js"></script>
+		<script src="js/display_mode.js"></script>
 		<script src="js/groove_writer.js"></script>
 		<script src="js/groove_utils.js"></script>
 		<script src="js/groove_to_guitarpro.js"></script>
@@ -98,7 +99,7 @@
 
 					<script>
 						if (!myGrooveWriter.myGrooveUtils.grooveDBAuthoring) {
-							document.write('<span class="left-button" onclick="myGrooveWriter.swapViewEditMode();"><span class="left-button-content"><span id="view-edit-switch" >Switch to EDIT mode</span></span></span>');
+							document.write('<span class="left-button" onclick="myGrooveWriter.cycleDisplayMode();"><span class="left-button-content"><span id="view-edit-switch" >Switch to EDIT mode</span></span></span>');
 						}
 					</script>
 

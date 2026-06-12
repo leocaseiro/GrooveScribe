@@ -2573,6 +2573,74 @@ function GrooveWriter() {
 		});
 	};
 
+	// --- ALPHATAB render view ---------------------------------------------
+	// Renders the current groove as alphaTab (Guitar Pro) notation into
+	// #alphaTabTarget on entry into ALPHATAB display mode. Read-only; reuses the
+	// exported createAlphaTex() + the shared loadAlphaTab loader, so
+	// js/groove_to_guitarpro.js stays DOM-free. Unlike the headless export, this
+	// instantiates AlphaTabApi, which needs the music font (and, by default, a worker).
+	var class_alphaTabApi = null; // memoized AlphaTabApi, created on first render
+
+	function setAlphaTabStatus(message, isError) {
+		var target = document.getElementById("alphaTabTarget");
+		if (!target)
+			return;
+		target.innerHTML = '';
+		var status = document.createElement('div');
+		status.className = isError ? 'alphaTabStatus error' : 'alphaTabStatus';
+		status.textContent = message;
+		target.appendChild(status);
+	}
+
+	root.updateAlphaTabRender = function () {
+		var target = document.getElementById("alphaTabTarget");
+		// Only render while the ALPHATAB view is actually showing (mirrors the
+		// visibility early-return in updateAlphaTexDisplay / updateGrooveDBSource).
+		if (!target || target.style.display === 'none')
+			return;
+
+		// Already initialised: alphaTab is loaded, just re-render the current groove.
+		// Re-entry path keeps the API's DOM binding intact instead of wiping it.
+		if (class_alphaTabApi) {
+			try {
+				class_alphaTabApi.tex(GrooveToGuitarPro.createAlphaTex(root.grooveDataFromClickableUI(), root.myGrooveUtils));
+			} catch (e) {
+				if (typeof console !== 'undefined') console.error(e);
+				setAlphaTabStatus('Could not render the notation.', true);
+			}
+			return;
+		}
+
+		// First entry: show a placeholder while the CDN library loads, then render.
+		setAlphaTabStatus('Loading notation…', false);
+		loadAlphaTab(function (alphaTab) {
+			try {
+				target.innerHTML = ''; // clear the loading placeholder before first render
+				var settings = {
+					core: {
+						// The headless export never loads these; rendering does. The injected
+						// CDN <script> id isn't alphaTab's default, so font auto-detection can
+						// miss -- point it at the bundle's font dir (derived from the CDN URL so
+						// it tracks the pinned version). Main-thread layout (no worker) keeps a
+						// single small groove simple and dodges worker/CORS load failures.
+						useWorkers: false,
+						fontDirectory: ALPHATAB_CDN_URL.replace(/alphaTab\.min\.js$/, 'font/')
+					},
+					player: { enablePlayer: false }
+				};
+				class_alphaTabApi = new alphaTab.AlphaTabApi(target, settings);
+				class_alphaTabApi.tex(GrooveToGuitarPro.createAlphaTex(root.grooveDataFromClickableUI(), root.myGrooveUtils));
+			} catch (e) {
+				if (typeof console !== 'undefined') console.error(e);
+				class_alphaTabApi = null; // let a later retry re-create cleanly
+				setAlphaTabStatus('Could not render the notation.', true);
+			}
+		}, function (err) {
+			if (typeof console !== 'undefined') console.error(err);
+			setAlphaTabStatus('Notation view unavailable — could not load the renderer. Check your connection and try again.', true);
+		});
+	};
+
 	// creates a grooveData class from the clickable UI elements of the page
 	//
 	root.grooveDataFromClickableUI = function () {
@@ -3428,6 +3496,49 @@ function GrooveWriter() {
 		}
 	};
 
+	// Tracks whether the ALPHATAB render view is the active display mode. Layered on
+	// top of myGrooveUtils.viewMode (true for BOTH view and alphatab, since both hide
+	// the .edit-block editing chrome). Only cycleDisplayMode() ever sets this true;
+	// the legacy swapViewEditMode() page-load path never does.
+	var class_alphaTab_mode_active = false;
+
+	// Current display mode derived from the two flags.
+	function currentDisplayMode() {
+		if (class_alphaTab_mode_active)
+			return 'alphatab';
+		return root.myGrooveUtils.viewMode ? 'view' : 'edit';
+	}
+
+	// Cycle EDIT -> VIEW -> ALPHATAB -> EDIT from the top-left control: apply the
+	// element visibility for the next mode, keep the legacy viewMode boolean in sync,
+	// relabel the control, and render the alphaTab view on entry. Render-on-entry is
+	// enough because ALPHATAB hides the grid, so the groove can't change while shown.
+	root.cycleDisplayMode = function () {
+		var next = GrooveDisplayMode.nextDisplayMode(currentDisplayMode());
+
+		class_alphaTab_mode_active = (next === 'alphatab');
+		// .edit-block (grid + bottom buttons) is visible only in EDIT.
+		showHideCSS_ClassDisplay(".edit-block", true, (next === 'edit'), "block");
+		// viewMode stays true for VIEW and ALPHATAB (both hide the editing chrome).
+		root.myGrooveUtils.viewMode = (next !== 'edit');
+
+		var svgTarget = document.getElementById("svgTarget");
+		if (svgTarget)
+			svgTarget.style.display = (next === 'alphatab') ? 'none' : '';
+		var alphaTabTarget = document.getElementById("alphaTabTarget");
+		if (alphaTabTarget)
+			alphaTabTarget.style.display = (next === 'alphatab') ? 'block' : 'none';
+
+		var label = document.getElementById("view-edit-switch");
+		if (label)
+			label.innerHTML = GrooveDisplayMode.displayModeButtonLabel(next);
+
+		root.updateCurrentURL();
+
+		if (next === 'alphatab')
+			root.updateAlphaTabRender();
+	};
+
 	// public function.
 	// This function initializes the data for the groove Scribe web page
 	root.runsOnPageLoad = function () {
@@ -3440,6 +3551,12 @@ function GrooveWriter() {
 		// if Mode != "view" put into edit mode  (we default to view mode to prevent screen flicker)
 		if("view" != root.myGrooveUtils.getQueryVariableFromURL("Mode", "edit"))
 			root.swapViewEditMode(true);
+
+		// Normalize the mode-switch label for the 3-way EDIT/VIEW/ALPHATAB cycle; the
+		// static markup assumes a binary toggle.
+		var viewEditSwitchLabel = document.getElementById("view-edit-switch");
+		if (viewEditSwitchLabel)
+			viewEditSwitchLabel.innerHTML = GrooveDisplayMode.displayModeButtonLabel(currentDisplayMode());
 
 		// set the background and text color of the current subdivision
 		selectButton(document.getElementById("subdivision_" + class_notes_per_measure + "ths"));
