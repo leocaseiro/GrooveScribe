@@ -3480,14 +3480,12 @@ function GrooveWriter() {
 		});
 	};
 
-	// Tracks whether the ALPHATAB render view is the active display mode. Layered on
-	// top of myGrooveUtils.viewMode (true for BOTH view and alphatab, since both hide
-	// the .edit-block editing chrome). Only setDisplayMode() sets this.
-	var class_alphaTab_mode_active = false;
-
-	// Current display mode derived from the two flags.
+	// Current display mode derived from the two myGrooveUtils flags. alphaTabMode is true
+	// only in ALPHATAB; viewMode is true for BOTH view and alphatab (both hide the
+	// .edit-block editing chrome). Both are plumbed into the groove URL, so Mode=view /
+	// Mode=alphatab survive reloads and shared links.
 	function currentDisplayMode() {
-		if (class_alphaTab_mode_active)
+		if (root.myGrooveUtils.alphaTabMode)
 			return 'alphatab';
 		return root.myGrooveUtils.viewMode ? 'view' : 'edit';
 	}
@@ -3496,7 +3494,7 @@ function GrooveWriter() {
 	// Applies element visibility, keeps the legacy viewMode boolean in sync, relabels
 	// the two home-nav mode buttons, and renders the alphaTab view on entry.
 	root.setDisplayMode = function (mode, dontUpdateURL) {
-		class_alphaTab_mode_active = (mode === 'alphatab');
+		root.myGrooveUtils.alphaTabMode = (mode === 'alphatab');
 		root.myGrooveUtils.viewMode = (mode !== 'edit');
 		// .edit-block (grid + bottom buttons) is visible only in EDIT.
 		showHideCSS_ClassDisplay(".edit-block", true, (mode === 'edit'), "block");
@@ -3549,9 +3547,14 @@ function GrooveWriter() {
 		setupPermutationMenu();
 		root.setTimeSigLabel();
 
-		// Apply the initial display mode from the URL (defaults to edit); this also sets
-		// both home-nav button labels. ALPHATAB is never the initial mode.
-		root.setDisplayMode("view" == root.myGrooveUtils.getQueryVariableFromURL("Mode", "edit") ? 'view' : 'edit', true);
+		// Initial display mode from the URL Mode param (edit | view | alphatab), so a reload
+		// or shared link restores the mode. ALPHATAB is skipped in the GrooveDB embed (no
+		// mode buttons there to switch back out). This also sets both button labels.
+		var urlMode = root.myGrooveUtils.getQueryVariableFromURL("Mode", "edit");
+		var initialMode = (urlMode === 'view') ? 'view'
+			: (urlMode === 'alphatab' && !root.myGrooveUtils.grooveDBAuthoring) ? 'alphatab'
+			: 'edit';
+		root.setDisplayMode(initialMode, true);
 
 		// set the background and text color of the current subdivision
 		selectButton(document.getElementById("subdivision_" + class_notes_per_measure + "ths"));
