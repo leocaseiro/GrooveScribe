@@ -350,3 +350,21 @@ test('rock beat: chords + eighths import and export', () => {
   const bytes = GrooveToGuitarPro.createGpData(gd, gu, alphaTab);
   assert.ok(bytes.length > 100, 'exported .gp has content');
 });
+
+test('drum beats build with stems forced up (preferredBeamDirection = Up)', () => {
+  const gd = grooveFromUrl('TimeSig=4/4&Div=16&H=|x-x-x-x-x-x-x-x-|&S=|----o-------o---|&K=|o-------o-------|&measures=1');
+  const { score } = GrooveToGuitarPro.buildScore(gd, gu, alphaTab);
+  const up = alphaTab.rendering.BeamDirection.Up;
+  const beats = score.tracks[0].staves[0].bars[0].voices[0].beats;
+  assert.ok(beats.length > 0, 'has drum beats');
+  assert.ok(beats.every(b => b.preferredBeamDirection === up), 'every drum beat prefers stems up');
+});
+
+test('exported .gp round-trips with stems up (Gp7Exporter persists the direction)', () => {
+  const gd = grooveFromUrl('TimeSig=4/4&Div=16&H=|x-x-x-x-x-x-x-x-|&S=|----o-------o---|&K=|o-------o-------|&measures=1');
+  const bytes = GrooveToGuitarPro.createGpData(gd, gu, alphaTab);
+  const up = alphaTab.rendering.BeamDirection.Up;
+  const score2 = alphaTab.importer.ScoreLoader.loadScoreFromBytes(new Uint8Array(bytes), new alphaTab.Settings());
+  const beats = score2.tracks[0].staves[0].bars[0].voices[0].beats;
+  assert.ok(beats.some(b => b.preferredBeamDirection === up), 'reimported .gp preserves stems up');
+});

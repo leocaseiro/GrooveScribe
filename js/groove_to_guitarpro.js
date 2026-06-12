@@ -249,12 +249,32 @@ var GrooveToGuitarPro = (function () {
       }
       score.finish(settings);
     }
+    forceStemsUp(score, alphaTab);
     return { score: score, settings: settings };
   }
 
   function createGpData(grooveData, grooveUtils, alphaTab) {
     var built = buildScore(grooveData, grooveUtils, alphaTab);
     return new alphaTab.exporter.Gp7Exporter().export(built.score, built.settings);
+  }
+
+  // Force every beat's stem/beam upward (DOM-free model edit). A single-voice
+  // percussion staff auto-stems by pitch, so beams fall below; GrooveScribe wants
+  // them up in both the rendered ALPHATAB view and the exported .gp. alphaTab's
+  // Gp7Exporter persists preferredBeamDirection, so the .gp opens stems-up too.
+  function forceStemsUp(score, alphaTab) {
+    var up = alphaTab.rendering.BeamDirection.Up;
+    score.tracks.forEach(function (track) {
+      track.staves.forEach(function (stave) {
+        stave.bars.forEach(function (bar) {
+          bar.voices.forEach(function (voice) {
+            voice.beats.forEach(function (beat) {
+              beat.preferredBeamDirection = up;
+            });
+          });
+        });
+      });
+    });
   }
 
   return {
@@ -264,5 +284,6 @@ var GrooveToGuitarPro = (function () {
     createStickingVoice: createStickingVoice,
     buildScore: buildScore,
     createGpData: createGpData,
+    forceStemsUp: forceStemsUp,
   };
 })();

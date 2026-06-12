@@ -2634,6 +2634,9 @@ function GrooveWriter() {
 					player: { enablePlayer: false }
 				};
 				class_alphaTabApi = new alphaTab.AlphaTabApi(target, settings);
+				// Drum stems up (shared with the .gp export). Hook fires on every load,
+				// so re-entry tex() calls keep stems up too.
+				class_alphaTabApi.scoreLoaded.on(function (score) { GrooveToGuitarPro.forceStemsUp(score, alphaTab); });
 				class_alphaTabApi.tex(GrooveToGuitarPro.createAlphaTex(root.grooveDataFromClickableUI(), root.myGrooveUtils));
 			} catch (e) {
 				if (typeof console !== 'undefined') console.error(e);
@@ -3536,6 +3539,12 @@ function GrooveWriter() {
 		var alphaTabTarget = document.getElementById("alphaTabTarget");
 		if (alphaTabTarget)
 			alphaTabTarget.style.display = (next === 'alphatab') ? 'block' : 'none';
+
+		// Keep the AlphaTex toggle reachable in ALPHATAB (it is .edit-block, so the
+		// hide above removed it) to compare the render with its source tex; hidden in VIEW.
+		var alphaTexBtn = document.getElementById("alphaTexButton");
+		if (alphaTexBtn)
+			alphaTexBtn.style.display = (next === 'view') ? 'none' : 'block';
 
 		var label = document.getElementById("view-edit-switch");
 		if (label)
