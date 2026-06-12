@@ -5104,12 +5104,14 @@ function GrooveWriter() {
 					msg += ", " + result.cloned + " cloned with '(imported)' suffix";
 				}
 				statusEl.textContent = msg + ".";
+				statusEl.className = "success";
 				root.renderMyGroovesList(document.getElementById("myGroovesSearchInput").value);
 			} catch (err) {
 				statusEl.textContent = "Error: " + err.message;
+				statusEl.className = "error";
 			}
 			event.target.value = "";
-			setTimeout(function () { statusEl.textContent = ""; }, 4000);
+			setTimeout(function () { statusEl.textContent = ""; statusEl.className = ""; }, 4000);
 		};
 		reader.readAsText(file);
 	};

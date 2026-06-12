@@ -1470,6 +1470,16 @@
 	min-height: 14px;
 }
 
+#myGroovesStatus.success {
+	color: #2a7a2a;
+	font-weight: bold;
+}
+
+#myGroovesStatus.error {
+	color: #c00;
+	font-weight: bold;
+}
+
 /* Save Groove Popup */
 
 #saveGroovePopup {
