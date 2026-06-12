@@ -4957,7 +4957,7 @@ function GrooveWriter() {
 		var html = "";
 		grooves.forEach(function (g) {
 			var meta = [g.artist, g.comment].filter(Boolean).join(" · ");
-			var safeName = g.name.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
+			var safeName = g.name.replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/"/g, "&quot;").replace(/"/g, "&quot;");
 			html += '<div class="myGrooveLI" data-groove-name="' + escapeHtml(g.name) + '">';
 			html +=   '<div class="myGrooveInfo" onclick="myGrooveWriter.loadSavedGroove(\'' + safeName + '\')">';
 			html +=     '<div class="myGrooveName">' + escapeHtml(g.name) + '</div>';
@@ -5010,7 +5010,7 @@ function GrooveWriter() {
 	root.saveAsGrooveClick = function () {
 		root.myGrooveUtils.hideContextMenu(document.getElementById("myGroovesMenu"));
 		root.openSaveGroovePopup(
-			document.getElementById("tuneTitle").value.trim(),
+			"",
 			document.getElementById("tuneAuthor").value.trim(),
 			document.getElementById("tuneComments").value.trim()
 		);
@@ -5022,6 +5022,7 @@ function GrooveWriter() {
 		var comment = (document.getElementById("saveGrooveComment").value || "").trim();
 		if (!name) return;
 
+		var autoDeduped = false;
 		if (action === "new" && grooveStorage.getByName(name)) {
 			var n = 2;
 			var candidate = name + " (" + n + ")";
@@ -5030,18 +5031,29 @@ function GrooveWriter() {
 				candidate = name + " (" + n + ")";
 			}
 			name = candidate;
+			autoDeduped = true;
 		}
 
-		// Sync DOM metadata to the final saved name before capturing the URL,
-		// so the stored URL always matches the groove's name/artist/comment.
+		// Sync DOM fields to the final name so get_FullURLForPage() captures it.
+		// For auto-deduped names (user never typed the "(2)" suffix), restore
+		// the original working title afterwards so the on-screen state is unchanged.
 		var titleEl = document.getElementById("tuneTitle");
 		var authorEl = document.getElementById("tuneAuthor");
 		var commentEl = document.getElementById("tuneComments");
+		var origTitle = titleEl ? titleEl.value : "";
+		var origAuthor = authorEl ? authorEl.value : "";
+		var origComment = commentEl ? commentEl.value : "";
 		if (titleEl) titleEl.value = name;
 		if (authorEl) authorEl.value = artist;
 		if (commentEl) commentEl.value = comment;
+		var url = get_FullURLForPage();
+		if (autoDeduped) {
+			if (titleEl) titleEl.value = origTitle;
+			if (authorEl) authorEl.value = origAuthor;
+			if (commentEl) commentEl.value = origComment;
+		}
 
-		grooveStorage.save({ name: name, artist: artist, comment: comment, url: get_FullURLForPage() });
+		grooveStorage.save({ name: name, artist: artist, comment: comment, url: url });
 		root.closeSaveGroovePopup();
 		root.refresh_ABC();
 	};
@@ -5078,7 +5090,7 @@ function GrooveWriter() {
 			if (items[i].getAttribute("data-groove-name") === name) { target = items[i]; break; }
 		}
 		if (!target) return;
-		var safeName = name.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
+		var safeName = name.replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/"/g, "&quot;");
 		target.outerHTML =
 			'<div class="myGrooveDeleteConfirm">' +
 			'Delete &ldquo;' + escapeHtml(name) + '&rdquo;? ' +

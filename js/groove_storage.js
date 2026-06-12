@@ -32,11 +32,11 @@ var grooveStorage = (function () {
         for (var i = 0; i < grooves.length; i++) {
             if (grooves[i].name === groove.name) { idx = i; break; }
         }
-        groove.savedAt = new Date().toISOString();
+        var record = { name: groove.name, artist: groove.artist, comment: groove.comment, url: groove.url, savedAt: new Date().toISOString() };
         if (idx >= 0) {
-            grooves[idx] = groove;
+            grooves[idx] = record;
         } else {
-            grooves.push(groove);
+            grooves.push(record);
         }
         persist(grooves);
     }
