@@ -1,4 +1,4 @@
-var version = '1.2.5';
+var version = '1.2.6';
 var timeStamp = Date.now();
 var coreID = 'leocaseiro.github.io' + version;
 var cacheIDs = [coreID];
