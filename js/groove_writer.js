@@ -840,6 +840,14 @@ function GrooveWriter() {
 
 	}
 
+	function escapeHtml(str) {
+		return String(str)
+			.replace(/&/g, "&amp;")
+			.replace(/</g, "&lt;")
+			.replace(/>/g, "&gt;")
+			.replace(/"/g, "&quot;");
+	}
+
 	function getTagPosition(tag) {
 		var xVal = 0,
 				yVal = 0;
@@ -4908,6 +4916,65 @@ function GrooveWriter() {
 
 		newHTML += '</span>\n';
 		return newHTML;
+	};
+
+	// ===== My Grooves Feature =====
+
+	root.myGroovesAnchorClick = function (event) {
+		var contextMenu = document.getElementById("myGroovesMenu");
+		if (contextMenu) {
+			var anchorPoint = document.getElementById("myGroovesAnchor");
+			if (anchorPoint) {
+				var anchorPos = getTagPosition(anchorPoint);
+				contextMenu.style.top = (anchorPos.y + anchorPoint.offsetHeight) + "px";
+				contextMenu.style.left = (anchorPos.x + anchorPoint.offsetWidth - 320) + "px";
+			}
+			document.getElementById("myGroovesSearchInput").value = "";
+			root.renderMyGroovesList("");
+			root.myGrooveUtils.showContextMenu(contextMenu);
+		}
+	};
+
+	root.renderMyGroovesList = function (filter) {
+		var grooves = grooveStorage.getAll();
+		var lc = (filter || "").toLowerCase();
+		if (lc) {
+			grooves = grooves.filter(function (g) {
+				return (g.name || "").toLowerCase().indexOf(lc) >= 0 ||
+				       (g.artist || "").toLowerCase().indexOf(lc) >= 0 ||
+				       (g.comment || "").toLowerCase().indexOf(lc) >= 0;
+			});
+		}
+		var listEl = document.getElementById("myGroovesList");
+		if (!listEl) return;
+		if (grooves.length === 0) {
+			listEl.innerHTML = '<div class="myGroovesEmpty">' +
+				(lc ? "No matches found." : "No saved grooves yet. Use Save to get started.") +
+				'</div>';
+			return;
+		}
+		var html = "";
+		grooves.forEach(function (g) {
+			var meta = [g.artist, g.comment].filter(Boolean).join(" · ");
+			var safeName = g.name.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
+			html += '<div class="myGrooveLI" data-groove-name="' + escapeHtml(g.name) + '">';
+			html +=   '<div class="myGrooveInfo" onclick="myGrooveWriter.loadSavedGroove(\'' + safeName + '\')">';
+			html +=     '<div class="myGrooveName">' + escapeHtml(g.name) + '</div>';
+			if (meta) {
+				html += '<div class="myGrooveMeta">' + escapeHtml(meta) + '</div>';
+			}
+			html +=   '</div>';
+			html +=   '<div class="myGrooveActions">';
+			html +=     '<span class="myGrooveActionBtn" title="Edit" onclick="myGrooveWriter.editSavedGroove(\'' + safeName + '\'); event.stopPropagation();"><i class="fa fa-pencil"></i></span>';
+			html +=     '<span class="myGrooveActionBtn" title="Delete" onclick="myGrooveWriter.deleteSavedGrooveConfirm(\'' + safeName + '\'); event.stopPropagation();"><i class="fa fa-trash"></i></span>';
+			html +=   '</div>';
+			html += '</div>';
+		});
+		listEl.innerHTML = html;
+	};
+
+	root.filterMyGrooves = function (value) {
+		root.renderMyGroovesList(value);
 	};
 
 } // end of class
