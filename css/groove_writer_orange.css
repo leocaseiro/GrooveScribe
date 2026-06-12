@@ -1584,3 +1584,26 @@
 	color: #888;
 	border: 1px solid #ccc !important;
 }
+
+/* Toast notification — shown outside any dropdown/popup */
+#gsToast {
+	display: none;
+	position: fixed;
+	bottom: 80px;
+	left: 50%;
+	transform: translateX(-50%);
+	z-index: 9999;
+	padding: 10px 20px;
+	border-radius: 5px;
+	font-size: 14px;
+	font-weight: bold;
+	color: #fff;
+	background: #2a7a2a;
+	box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+	white-space: nowrap;
+	pointer-events: none;
+}
+
+#gsToast.error {
+	background: #c00;
+}

@@ -848,6 +848,17 @@ function GrooveWriter() {
 			.replace(/"/g, "&quot;");
 	}
 
+	var toastTimer = null;
+	function showToast(msg, isError) {
+		var toast = document.getElementById("gsToast");
+		if (!toast) return;
+		toast.textContent = msg;
+		toast.className = isError ? "error" : "";
+		toast.style.display = "block";
+		clearTimeout(toastTimer);
+		toastTimer = setTimeout(function () { toast.style.display = "none"; }, 4000);
+	}
+
 	function getTagPosition(tag) {
 		var xVal = 0,
 				yVal = 0;
@@ -5125,22 +5136,18 @@ function GrooveWriter() {
 		if (!file) return;
 		var reader = new FileReader();
 		reader.onload = function (e) {
-			var statusEl = document.getElementById("myGroovesStatus");
 			try {
 				var result = grooveStorage.importJSON(e.target.result);
 				var msg = result.added + " imported";
 				if (result.cloned > 0) {
 					msg += ", " + result.cloned + " cloned with '(imported)' suffix";
 				}
-				statusEl.textContent = msg + ".";
-				statusEl.className = "success";
-				root.renderMyGroovesList(document.getElementById("myGroovesSearchInput").value);
+				showToast(msg + ".", false);
+				root.renderMyGroovesList("");
 			} catch (err) {
-				statusEl.textContent = "Error: " + err.message;
-				statusEl.className = "error";
+				showToast("Import error: " + err.message, true);
 			}
 			event.target.value = "";
-			setTimeout(function () { statusEl.textContent = ""; statusEl.className = ""; }, 4000);
 		};
 		reader.readAsText(file);
 	};
