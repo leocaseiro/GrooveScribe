@@ -2614,6 +2614,11 @@ function GrooveWriter() {
 		// First entry: show a placeholder while the CDN library loads, then render.
 		setAlphaTabStatus('Loading notation…', false);
 		loadAlphaTab(function (alphaTab) {
+			// The user may have cycled out of ALPHATAB while the CDN script loaded;
+			// skip rendering into a hidden, zero-size container. class_alphaTabApi stays
+			// null, so the next entry into the mode retries cleanly.
+			if (!target || target.style.display === 'none')
+				return;
 			try {
 				target.innerHTML = ''; // clear the loading placeholder before first render
 				var settings = {
@@ -2637,6 +2642,9 @@ function GrooveWriter() {
 			}
 		}, function (err) {
 			if (typeof console !== 'undefined') console.error(err);
+			// Don't paint an error into a container the user already navigated away from.
+			if (!target || target.style.display === 'none')
+				return;
 			setAlphaTabStatus('Notation view unavailable — could not load the renderer. Check your connection and try again.', true);
 		});
 	};
