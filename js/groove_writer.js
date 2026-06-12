@@ -5022,8 +5022,6 @@ function GrooveWriter() {
 		var comment = (document.getElementById("saveGrooveComment").value || "").trim();
 		if (!name) return;
 
-		var groove = { name: name, artist: artist, comment: comment, url: get_FullURLForPage() };
-
 		if (action === "new" && grooveStorage.getByName(name)) {
 			var n = 2;
 			var candidate = name + " (" + n + ")";
@@ -5031,11 +5029,21 @@ function GrooveWriter() {
 				n++;
 				candidate = name + " (" + n + ")";
 			}
-			groove.name = candidate;
+			name = candidate;
 		}
 
-		grooveStorage.save(groove);
+		// Sync DOM metadata to the final saved name before capturing the URL,
+		// so the stored URL always matches the groove's name/artist/comment.
+		var titleEl = document.getElementById("tuneTitle");
+		var authorEl = document.getElementById("tuneAuthor");
+		var commentEl = document.getElementById("tuneComments");
+		if (titleEl) titleEl.value = name;
+		if (authorEl) authorEl.value = artist;
+		if (commentEl) commentEl.value = comment;
+
+		grooveStorage.save({ name: name, artist: artist, comment: comment, url: get_FullURLForPage() });
 		root.closeSaveGroovePopup();
+		root.refresh_ABC();
 	};
 
 	root.loadSavedGroove = function (name) {
