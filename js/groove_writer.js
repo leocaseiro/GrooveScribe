@@ -5106,7 +5106,7 @@ function GrooveWriter() {
 			'<div class="myGrooveDeleteConfirm">' +
 			'Delete &ldquo;' + escapeHtml(name) + '&rdquo;? ' +
 			'<span class="myGrooveDeleteYes" onclick="myGrooveWriter.deleteSavedGroove(\'' + safeName + '\')">Yes, delete</span>' +
-			'<span class="myGrooveDeleteNo" onclick="myGrooveWriter.renderMyGroovesList(document.getElementById(\'myGroovesSearchInput\').value)">Cancel</span>' +
+			'<span class="myGrooveDeleteNo" onclick="myGrooveWriter.renderMyGroovesList(document.getElementById(\'myGroovesSearchInput\').value); event.stopPropagation();">Cancel</span>' +
 			'</div>';
 	};
 
