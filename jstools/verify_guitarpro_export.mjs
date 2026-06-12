@@ -326,11 +326,18 @@ test('title with a double-quote does not break the export', () => {
   assert.ok(!/\\title "[^"]*"[^"]*"/.test(tex.split('\n')[0]), 'no raw inner quote in title line');
 });
 
-test('author becomes \\subtitle when present', () => {
+test('author becomes \\artist when present', () => {
   const gd = grooveFromUrl('TimeSig=4/4&Div=16&H=|x---------------|&measures=1');
   gd.author = 'Jane Drummer';
   const tex = GrooveToGuitarPro.createAlphaTex(gd, gu);
-  assert.match(tex, /\\subtitle "Jane Drummer"/);
+  assert.match(tex, /\\artist "Jane Drummer"/);
+});
+
+test('comment becomes \\subtitle when present', () => {
+  const gd = grooveFromUrl('TimeSig=4/4&Div=16&H=|x---------------|&measures=1');
+  gd.comments = 'Practice slow';
+  const tex = GrooveToGuitarPro.createAlphaTex(gd, gu);
+  assert.match(tex, /\\subtitle "Practice slow"/);
 });
 
 test('escapeAlphaTex strips quotes, backslashes, and newlines', () => {
@@ -349,4 +356,41 @@ test('rock beat: chords + eighths import and export', () => {
   // end-to-end export does not throw and yields bytes
   const bytes = GrooveToGuitarPro.createGpData(gd, gu, alphaTab);
   assert.ok(bytes.length > 100, 'exported .gp has content');
+});
+
+test('drum beats build with stems forced up (preferredBeamDirection = Up)', () => {
+  const gd = grooveFromUrl('TimeSig=4/4&Div=16&H=|x-x-x-x-x-x-x-x-|&S=|----o-------o---|&K=|o-------o-------|&measures=1');
+  const { score } = GrooveToGuitarPro.buildScore(gd, gu, alphaTab);
+  const up = alphaTab.rendering.BeamDirection.Up;
+  const beats = score.tracks[0].staves[0].bars[0].voices[0].beats;
+  assert.ok(beats.length > 0, 'has drum beats');
+  assert.ok(beats.every(b => b.preferredBeamDirection === up), 'every drum beat prefers stems up');
+});
+
+test('exported .gp round-trips with stems up (Gp7Exporter persists the direction)', () => {
+  const gd = grooveFromUrl('TimeSig=4/4&Div=16&H=|x-x-x-x-x-x-x-x-|&S=|----o-------o---|&K=|o-------o-------|&measures=1');
+  const bytes = GrooveToGuitarPro.createGpData(gd, gu, alphaTab);
+  const up = alphaTab.rendering.BeamDirection.Up;
+  const score2 = alphaTab.importer.ScoreLoader.loadScoreFromBytes(new Uint8Array(bytes), new alphaTab.Settings());
+  const beats = score2.tracks[0].staves[0].bars[0].voices[0].beats;
+  assert.ok(beats.some(b => b.preferredBeamDirection === up), 'reimported .gp preserves stems up');
+});
+
+test('alphaTex string encodes stems up via {beam up} on every beat', () => {
+  const gd = grooveFromUrl('TimeSig=4/4&Div=16&H=|x-x-x-x-x-x-x-x-|&S=|----o-------o---|&K=|o-------o-------|&measures=1');
+  const tex = GrooveToGuitarPro.createAlphaTex(gd, gu);
+  assert.match(tex, /\{beam up\}/);
+  const { score } = importTex(tex);
+  const up = alphaTab.rendering.BeamDirection.Up;
+  const beats = score.tracks[0].staves[0].bars[0].voices[0].beats;
+  assert.ok(beats.every(b => b.preferredBeamDirection === up), 'imported beats all prefer stems up');
+});
+
+test('triplet beat still tuplets when merged with {beam up}', () => {
+  const gd = grooveFromUrl('TimeSig=4/4&Div=12&H=|xxxxxxxxxxxx|&S=|------------|&K=|o--o--o--o--|&measures=1');
+  const tex = GrooveToGuitarPro.createAlphaTex(gd, gu);
+  assert.match(tex, /\{tu 3 beam up\}/);
+  const { score } = importTex(tex);
+  const beats = score.tracks[0].staves[0].bars[0].voices[0].beats;
+  assert.ok(beats.every(b => b.tupletNumerator === 3), 'tuplet survives the merged property block');
 });

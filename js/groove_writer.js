@@ -2573,6 +2573,83 @@ function GrooveWriter() {
 		});
 	};
 
+	// --- ALPHATAB render view ---------------------------------------------
+	// Renders the current groove as alphaTab (Guitar Pro) notation into
+	// #alphaTabTarget on entry into ALPHATAB display mode. Read-only; reuses the
+	// exported createAlphaTex() + the shared loadAlphaTab loader, so
+	// js/groove_to_guitarpro.js stays DOM-free. Unlike the headless export, this
+	// instantiates AlphaTabApi, which needs the music font (and, by default, a worker).
+	var class_alphaTabApi = null; // memoized AlphaTabApi, created on first render
+
+	function setAlphaTabStatus(message, isError) {
+		var target = document.getElementById("alphaTabTarget");
+		if (!target)
+			return;
+		target.innerHTML = '';
+		var status = document.createElement('div');
+		status.className = isError ? 'alphaTabStatus error' : 'alphaTabStatus';
+		status.textContent = message;
+		target.appendChild(status);
+	}
+
+	root.updateAlphaTabRender = function () {
+		var target = document.getElementById("alphaTabTarget");
+		// Only render while the ALPHATAB view is actually showing (mirrors the
+		// visibility early-return in updateAlphaTexDisplay / updateGrooveDBSource).
+		if (!target || target.style.display === 'none')
+			return;
+
+		// Already initialised: alphaTab is loaded, just re-render the current groove.
+		// Re-entry path keeps the API's DOM binding intact instead of wiping it.
+		if (class_alphaTabApi) {
+			try {
+				class_alphaTabApi.tex(GrooveToGuitarPro.createAlphaTex(root.grooveDataFromClickableUI(), root.myGrooveUtils));
+			} catch (e) {
+				if (typeof console !== 'undefined') console.error(e);
+				setAlphaTabStatus('Could not render the notation.', true);
+			}
+			return;
+		}
+
+		// First entry: show a placeholder while the CDN library loads, then render.
+		setAlphaTabStatus('Loading notation…', false);
+		loadAlphaTab(function (alphaTab) {
+			// The user may have cycled out of ALPHATAB while the CDN script loaded;
+			// skip rendering into a hidden, zero-size container. class_alphaTabApi stays
+			// null, so the next entry into the mode retries cleanly.
+			if (!target || target.style.display === 'none')
+				return;
+			try {
+				target.innerHTML = ''; // clear the loading placeholder before first render
+				var settings = {
+					core: {
+						// The headless export never loads these; rendering does. The injected
+						// CDN <script> id isn't alphaTab's default, so font auto-detection can
+						// miss -- point it at the bundle's font dir (derived from the CDN URL so
+						// it tracks the pinned version). Main-thread layout (no worker) keeps a
+						// single small groove simple and dodges worker/CORS load failures.
+						useWorkers: false,
+						fontDirectory: ALPHATAB_CDN_URL.replace(/alphaTab\.min\.js$/, 'font/')
+					},
+					player: { enablePlayer: false }
+				};
+				class_alphaTabApi = new alphaTab.AlphaTabApi(target, settings);
+				// createAlphaTex emits {beam up} per beat, so the render shows drum stems up.
+				class_alphaTabApi.tex(GrooveToGuitarPro.createAlphaTex(root.grooveDataFromClickableUI(), root.myGrooveUtils));
+			} catch (e) {
+				if (typeof console !== 'undefined') console.error(e);
+				class_alphaTabApi = null; // let a later retry re-create cleanly
+				setAlphaTabStatus('Could not render the notation.', true);
+			}
+		}, function (err) {
+			if (typeof console !== 'undefined') console.error(err);
+			// Don't paint an error into a container the user already navigated away from.
+			if (!target || target.style.display === 'none')
+				return;
+			setAlphaTabStatus('Notation view unavailable — could not load the renderer. Check your connection and try again.', true);
+		});
+	};
+
 	// creates a grooveData class from the clickable UI elements of the page
 	//
 	root.grooveDataFromClickableUI = function () {
@@ -2691,6 +2768,78 @@ function GrooveWriter() {
 		DBString += "\n}}";
 
 		document.getElementById("GrooveDB_source").value = DBString;
+	};
+
+	// ---- Read-only "Show AlphaTex" debug panel ------------------------------
+	// alphaTex is the intermediate string the Guitar Pro (.gp) export feeds into
+	// alphaTab. This mirrors updateGrooveDBSource: a live, render-only view of the
+	// current groove that does work only while its panel is visible. All DOM lives
+	// here so js/groove_to_guitarpro.js stays DOM-free.
+	root.updateAlphaTexDisplay = function () {
+		var output = document.getElementById("alphaTexOutput");
+		if (!output || output.style.display == 'none')
+			return; // hidden: nothing to update (same early-return as updateGrooveDBSource)
+
+		var content = document.getElementById("alphaTexContent");
+		if (!content)
+			return;
+
+		// textContent, not innerHTML: display-only, so no HTML-escaping concerns.
+		content.textContent = GrooveToGuitarPro.createAlphaTex(root.grooveDataFromClickableUI(), root.myGrooveUtils);
+	};
+
+	root.toggleAlphaTexDisplay = function () {
+		var output = document.getElementById("alphaTexOutput");
+		if (!output)
+			return;
+
+		var nowVisible = (output.style.display == 'none');
+		output.style.display = nowVisible ? 'block' : 'none';
+
+		// best-effort persistence; private-mode / disabled storage must not throw
+		try {
+			localStorage.setItem("GS_showAlphaTex", nowVisible ? "1" : "0");
+		} catch (e) { /* ignore */ }
+
+		root.updateAlphaTexDisplay(); // fill in on show; no-op on hide
+	};
+
+	root.copyAlphaTexToClipboard = function () {
+		var content = document.getElementById("alphaTexContent");
+		if (!content)
+			return;
+
+		var flashCopied = function () {
+			var btn = document.getElementById("alphaTexCopyButton");
+			if (!btn)
+				return;
+			var prevHTML = btn.innerHTML;
+			btn.innerHTML = '<i class="fa fa-check"></i> Copied';
+			setTimeout(function () { btn.innerHTML = prevHTML; }, 1200);
+		};
+
+		// legacy fallback: select the <pre> contents and execCommand. (copyShareURLToClipboard
+		// can't be reused: that path needs a form field; this is a <pre>.)
+		var legacyCopy = function () {
+			var range = document.createRange();
+			range.selectNodeContents(content);
+			var sel = window.getSelection();
+			sel.removeAllRanges();
+			sel.addRange(range);
+			try { document.execCommand("copy"); } catch (e) { /* ignore */ }
+			sel.removeAllRanges();
+		};
+
+		var text = content.textContent || "";
+		if (navigator.clipboard && navigator.clipboard.writeText) {
+			navigator.clipboard.writeText(text).then(flashCopied, function () {
+				legacyCopy();
+				flashCopied();
+			});
+		} else {
+			legacyCopy();
+			flashCopied();
+		}
 	};
 
 	root.undoCommand = function () {
@@ -2945,6 +3094,7 @@ function GrooveWriter() {
 
 		document.getElementById("ABCsource").value = fullABC;
 		root.updateGrooveDBSource();
+		root.updateAlphaTexDisplay();
 
 		root.myGrooveUtils.midiNoteHasChanged(); // pretty likely the case
 
@@ -3330,29 +3480,62 @@ function GrooveWriter() {
 		});
 	};
 
-	root.swapViewEditMode = function(dontUpdateURL) {
-		var view_edit_button = document.getElementById("view-edit-switch");
+	// Current display mode derived from the two myGrooveUtils flags. alphaTabMode is true
+	// only in ALPHATAB; viewMode is true for BOTH view and alphatab (both hide the
+	// .edit-block editing chrome). Both are plumbed into the groove URL, so Mode=view /
+	// Mode=alphatab survive reloads and shared links.
+	function currentDisplayMode() {
+		if (root.myGrooveUtils.alphaTabMode)
+			return 'alphatab';
+		return root.myGrooveUtils.viewMode ? 'view' : 'edit';
+	}
 
-		if(root.myGrooveUtils.viewMode) {
+	// Single source of truth for the three display modes (EDIT / VIEW / ALPHATAB).
+	// Applies element visibility, keeps the legacy viewMode boolean in sync, relabels
+	// the two home-nav mode buttons, and renders the alphaTab view on entry.
+	root.setDisplayMode = function (mode, dontUpdateURL) {
+		root.myGrooveUtils.alphaTabMode = (mode === 'alphatab');
+		root.myGrooveUtils.viewMode = (mode !== 'edit');
+		// .edit-block (grid + bottom buttons) is visible only in EDIT.
+		showHideCSS_ClassDisplay(".edit-block", true, (mode === 'edit'), "block");
 
-			showHideCSS_ClassDisplay(".edit-block", true, true, "block"); // show
+		var svgTarget = document.getElementById("svgTarget");
+		if (svgTarget)
+			svgTarget.style.display = (mode === 'alphatab') ? 'none' : '';
+		var alphaTabTarget = document.getElementById("alphaTabTarget");
+		if (alphaTabTarget)
+			alphaTabTarget.style.display = (mode === 'alphatab') ? 'block' : 'none';
 
-			if(view_edit_button)
-				view_edit_button.innerHTML = "Switch to VIEW mode";
-			root.myGrooveUtils.viewMode = false;
+		// AlphaTex toggle stays reachable in EDIT and ALPHATAB (it is .edit-block, so the
+		// hide above removed it in ALPHATAB); hidden in VIEW.
+		var alphaTexBtn = document.getElementById("alphaTexButton");
+		if (alphaTexBtn)
+			alphaTexBtn.style.display = (mode === 'view') ? 'none' : 'block';
 
-			if(!dontUpdateURL)
-				root.updateCurrentURL();
-		} else {
+		// Two independent home-nav buttons: each reads "Switch to <its mode>", or
+		// "Switch to EDIT mode" when its own mode is the active one.
+		var viewBtn = document.getElementById("view-edit-switch");
+		if (viewBtn)
+			viewBtn.innerHTML = (mode === 'view') ? "Switch to EDIT mode" : "Switch to VIEW mode";
+		var alphaTabBtn = document.getElementById("alphatab-switch");
+		if (alphaTabBtn)
+			alphaTabBtn.innerHTML = (mode === 'alphatab') ? "Switch to EDIT mode" : "Switch to ALPHATAB mode";
 
-			showHideCSS_ClassDisplay(".edit-block", true, false, "block"); // hide
+		if (!dontUpdateURL)
+			root.updateCurrentURL();
+		if (mode === 'alphatab')
+			root.updateAlphaTabRender();
+	};
 
-			if(view_edit_button)
-				view_edit_button.innerHTML = "Switch to EDIT mode";
-			root.myGrooveUtils.viewMode = true;
-			if(!dontUpdateURL)
-				root.updateCurrentURL();
-		}
+	// Home-nav button: toggle EDIT <-> VIEW (also leaves ALPHATAB to VIEW). Signature
+	// preserved (dontUpdateURL) for the page-load caller.
+	root.swapViewEditMode = function (dontUpdateURL) {
+		root.setDisplayMode(currentDisplayMode() === 'view' ? 'edit' : 'view', dontUpdateURL);
+	};
+
+	// Home-nav button under the view/edit switch: toggle ALPHATAB <-> EDIT.
+	root.toggleAlphaTabMode = function () {
+		root.setDisplayMode(currentDisplayMode() === 'alphatab' ? 'edit' : 'alphatab');
 	};
 
 	// public function.
@@ -3364,9 +3547,14 @@ function GrooveWriter() {
 		setupPermutationMenu();
 		root.setTimeSigLabel();
 
-		// if Mode != "view" put into edit mode  (we default to view mode to prevent screen flicker)
-		if("view" != root.myGrooveUtils.getQueryVariableFromURL("Mode", "edit"))
-			root.swapViewEditMode(true);
+		// Initial display mode from the URL Mode param (edit | view | alphatab), so a reload
+		// or shared link restores the mode. ALPHATAB is skipped in the GrooveDB embed (no
+		// mode buttons there to switch back out). This also sets both button labels.
+		var urlMode = root.myGrooveUtils.getQueryVariableFromURL("Mode", "edit");
+		var initialMode = (urlMode === 'view') ? 'view'
+			: (urlMode === 'alphatab' && !root.myGrooveUtils.grooveDBAuthoring) ? 'alphatab'
+			: 'edit';
+		root.setDisplayMode(initialMode, true);
 
 		// set the background and text color of the current subdivision
 		selectButton(document.getElementById("subdivision_" + class_notes_per_measure + "ths"));
@@ -3436,6 +3624,18 @@ function GrooveWriter() {
 
 		// get updates when the tempo changes
 		root.myGrooveUtils.tempoChangeCallback = root.tempoChangeCallback
+
+		// restore the persisted "Show AlphaTex" panel, but only when its toggle button
+		// is actually usable. offsetParent is null in view mode and in the GrooveDB embed
+		// (button is display:none there), so we never surface the panel where the user
+		// couldn't toggle it back off.
+		try {
+			var alphaTexButton = document.getElementById("alphaTexButton");
+			if (localStorage.getItem("GS_showAlphaTex") == "1" && alphaTexButton && alphaTexButton.offsetParent !== null) {
+				document.getElementById("alphaTexOutput").style.display = 'block';
+				root.updateAlphaTexDisplay();
+			}
+		} catch (e) { /* storage unavailable: skip restore */ }
 	};
 
 	// called right before the midi reloads for the next replay

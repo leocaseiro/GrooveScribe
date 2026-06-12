@@ -123,6 +123,7 @@ function GrooveUtils() {
 	// debug & special view
 	root.debugMode = false;
 	root.viewMode = true;  // by default to prevent screen flicker
+	root.alphaTabMode = false; // ALPHATAB render view; mirrors viewMode so URL Mode=alphatab persists
 	root.grooveDBAuthoring = false;
 
 	// midi state variables
@@ -174,6 +175,7 @@ function GrooveUtils() {
 		this.debugMode = root.debugMode;
 		this.grooveDBAuthoring = root.grooveDBAuthoring;
 		this.viewMode = root.viewMode;
+		this.alphaTabMode = root.alphaTabMode;
 	};
 
 	root.myGrooveData = root.grooveDataNew();
@@ -1059,7 +1061,9 @@ function GrooveUtils() {
 		if (myGrooveData.debugMode)
 			fullURL += "Debug=1&";
 
-		if (myGrooveData.viewMode)
+		if (myGrooveData.alphaTabMode)
+			fullURL += "Mode=alphatab&";
+		else if (myGrooveData.viewMode)
 			fullURL += "Mode=view&";
 
 		if (myGrooveData.grooveDBAuthoring)

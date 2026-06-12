@@ -1218,6 +1218,78 @@
 	.edit-block {
 		display: none;
 	}
+	/* read-only "Show AlphaTex" debug panel (matches the dark bottomButtonRow chrome) */
+	#alphaTexOutput {
+		margin: 12px 0px 0px 0px;
+		border: 1px solid #E69138;
+		border-radius: 7px;
+		background: #2b2b2b;
+		overflow: hidden;
+		text-align: left;
+	}
+	#alphaTexHeader {
+		display: -webkit-flex;
+		display: flex;
+		justify-content: space-between;
+		-webkit-justify-content: space-between;
+		align-items: center;
+		-webkit-align-items: center;
+		padding: 8px 12px;
+		background: #393939;
+		color: #CCCCCC;
+		font-weight: bold;
+		font-size: 14px;
+	}
+	#alphaTexSubtitle {
+		color: #888888;
+		font-weight: normal;
+		font-size: 12px;
+	}
+	#alphaTexCopyButton {
+		cursor: pointer;
+		background: #E69138;
+		color: #FFFFFF;
+		border: none;
+		border-radius: 4px;
+		padding: 5px 14px;
+		font-size: 13px;
+		font-weight: bold;
+	}
+	#alphaTexCopyButton:hover {
+		background: #F0A856;
+	}
+	#alphaTexContent {
+		margin: 0px;
+		padding: 12px;
+		max-height: 320px;
+		overflow: auto;
+		color: #EEEEEE;
+		font-family: "Courier New", Courier, monospace;
+		font-size: 13px;
+		line-height: 1.45;
+		white-space: pre;
+		-moz-tab-size: 2;
+		tab-size: 2;
+	}
+	/* alphaTab (Guitar Pro) rendered view; shown only in ALPHATAB mode */
+	#alphaTabTarget {
+		margin: 12px 0 0 0;
+		border: 1px solid #E69138;
+		border-radius: 7px;
+		background: #FFFFFF;
+		overflow: auto;
+		min-height: 140px;
+	}
+	.alphaTabStatus {
+		padding: 48px 16px;
+		color: #888888;
+		font-family: "Helvetica Neue", Arial, sans-serif;
+		font-size: 15px;
+		text-align: center;
+	}
+	.alphaTabStatus.error {
+		color: #C0392B;
+	}
 	/*  3 circles make up the tom icon.  Position them */
 	#icon-tom1 {
 		font-size: 16px;
