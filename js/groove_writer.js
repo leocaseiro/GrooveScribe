@@ -3480,35 +3480,9 @@ function GrooveWriter() {
 		});
 	};
 
-	root.swapViewEditMode = function(dontUpdateURL) {
-		var view_edit_button = document.getElementById("view-edit-switch");
-
-		if(root.myGrooveUtils.viewMode) {
-
-			showHideCSS_ClassDisplay(".edit-block", true, true, "block"); // show
-
-			if(view_edit_button)
-				view_edit_button.innerHTML = "Switch to VIEW mode";
-			root.myGrooveUtils.viewMode = false;
-
-			if(!dontUpdateURL)
-				root.updateCurrentURL();
-		} else {
-
-			showHideCSS_ClassDisplay(".edit-block", true, false, "block"); // hide
-
-			if(view_edit_button)
-				view_edit_button.innerHTML = "Switch to EDIT mode";
-			root.myGrooveUtils.viewMode = true;
-			if(!dontUpdateURL)
-				root.updateCurrentURL();
-		}
-	};
-
 	// Tracks whether the ALPHATAB render view is the active display mode. Layered on
 	// top of myGrooveUtils.viewMode (true for BOTH view and alphatab, since both hide
-	// the .edit-block editing chrome). Only cycleDisplayMode() ever sets this true;
-	// the legacy swapViewEditMode() page-load path never does.
+	// the .edit-block editing chrome). Only setDisplayMode() sets this.
 	var class_alphaTab_mode_active = false;
 
 	// Current display mode derived from the two flags.
@@ -3518,40 +3492,52 @@ function GrooveWriter() {
 		return root.myGrooveUtils.viewMode ? 'view' : 'edit';
 	}
 
-	// Cycle EDIT -> VIEW -> ALPHATAB -> EDIT from the top-left control: apply the
-	// element visibility for the next mode, keep the legacy viewMode boolean in sync,
-	// relabel the control, and render the alphaTab view on entry. Render-on-entry is
-	// enough because ALPHATAB hides the grid, so the groove can't change while shown.
-	root.cycleDisplayMode = function () {
-		var next = GrooveDisplayMode.nextDisplayMode(currentDisplayMode());
-
-		class_alphaTab_mode_active = (next === 'alphatab');
+	// Single source of truth for the three display modes (EDIT / VIEW / ALPHATAB).
+	// Applies element visibility, keeps the legacy viewMode boolean in sync, relabels
+	// the two home-nav mode buttons, and renders the alphaTab view on entry.
+	root.setDisplayMode = function (mode, dontUpdateURL) {
+		class_alphaTab_mode_active = (mode === 'alphatab');
+		root.myGrooveUtils.viewMode = (mode !== 'edit');
 		// .edit-block (grid + bottom buttons) is visible only in EDIT.
-		showHideCSS_ClassDisplay(".edit-block", true, (next === 'edit'), "block");
-		// viewMode stays true for VIEW and ALPHATAB (both hide the editing chrome).
-		root.myGrooveUtils.viewMode = (next !== 'edit');
+		showHideCSS_ClassDisplay(".edit-block", true, (mode === 'edit'), "block");
 
 		var svgTarget = document.getElementById("svgTarget");
 		if (svgTarget)
-			svgTarget.style.display = (next === 'alphatab') ? 'none' : '';
+			svgTarget.style.display = (mode === 'alphatab') ? 'none' : '';
 		var alphaTabTarget = document.getElementById("alphaTabTarget");
 		if (alphaTabTarget)
-			alphaTabTarget.style.display = (next === 'alphatab') ? 'block' : 'none';
+			alphaTabTarget.style.display = (mode === 'alphatab') ? 'block' : 'none';
 
-		// Keep the AlphaTex toggle reachable in ALPHATAB (it is .edit-block, so the
-		// hide above removed it) to compare the render with its source tex; hidden in VIEW.
+		// AlphaTex toggle stays reachable in EDIT and ALPHATAB (it is .edit-block, so the
+		// hide above removed it in ALPHATAB); hidden in VIEW.
 		var alphaTexBtn = document.getElementById("alphaTexButton");
 		if (alphaTexBtn)
-			alphaTexBtn.style.display = (next === 'view') ? 'none' : 'block';
+			alphaTexBtn.style.display = (mode === 'view') ? 'none' : 'block';
 
-		var label = document.getElementById("view-edit-switch");
-		if (label)
-			label.innerHTML = GrooveDisplayMode.displayModeButtonLabel(next);
+		// Two independent home-nav buttons: each reads "Switch to <its mode>", or
+		// "Switch to EDIT mode" when its own mode is the active one.
+		var viewBtn = document.getElementById("view-edit-switch");
+		if (viewBtn)
+			viewBtn.innerHTML = (mode === 'view') ? "Switch to EDIT mode" : "Switch to VIEW mode";
+		var alphaTabBtn = document.getElementById("alphatab-switch");
+		if (alphaTabBtn)
+			alphaTabBtn.innerHTML = (mode === 'alphatab') ? "Switch to EDIT mode" : "Switch to ALPHATAB mode";
 
-		root.updateCurrentURL();
-
-		if (next === 'alphatab')
+		if (!dontUpdateURL)
+			root.updateCurrentURL();
+		if (mode === 'alphatab')
 			root.updateAlphaTabRender();
+	};
+
+	// Home-nav button: toggle EDIT <-> VIEW (also leaves ALPHATAB to VIEW). Signature
+	// preserved (dontUpdateURL) for the page-load caller.
+	root.swapViewEditMode = function (dontUpdateURL) {
+		root.setDisplayMode(currentDisplayMode() === 'view' ? 'edit' : 'view', dontUpdateURL);
+	};
+
+	// Home-nav button under the view/edit switch: toggle ALPHATAB <-> EDIT.
+	root.toggleAlphaTabMode = function () {
+		root.setDisplayMode(currentDisplayMode() === 'alphatab' ? 'edit' : 'alphatab');
 	};
 
 	// public function.
@@ -3563,15 +3549,9 @@ function GrooveWriter() {
 		setupPermutationMenu();
 		root.setTimeSigLabel();
 
-		// if Mode != "view" put into edit mode  (we default to view mode to prevent screen flicker)
-		if("view" != root.myGrooveUtils.getQueryVariableFromURL("Mode", "edit"))
-			root.swapViewEditMode(true);
-
-		// Normalize the mode-switch label for the 3-way EDIT/VIEW/ALPHATAB cycle; the
-		// static markup assumes a binary toggle.
-		var viewEditSwitchLabel = document.getElementById("view-edit-switch");
-		if (viewEditSwitchLabel)
-			viewEditSwitchLabel.innerHTML = GrooveDisplayMode.displayModeButtonLabel(currentDisplayMode());
+		// Apply the initial display mode from the URL (defaults to edit); this also sets
+		// both home-nav button labels. ALPHATAB is never the initial mode.
+		root.setDisplayMode("view" == root.myGrooveUtils.getQueryVariableFromURL("Mode", "edit") ? 'view' : 'edit', true);
 
 		// set the background and text color of the current subdivision
 		selectButton(document.getElementById("subdivision_" + class_notes_per_measure + "ths"));

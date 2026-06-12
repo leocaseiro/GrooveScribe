@@ -1,4 +1,4 @@
-var version = '1.2.8';
+var version = '1.2.9';
 var timeStamp = Date.now();
 var coreID = 'leocaseiro.github.io' + version;
 var cacheIDs = [coreID];
@@ -24,7 +24,6 @@ self.addEventListener('install', function(e) {
         './js/abc2svg-1.js?timestamp=' + timeStamp,
         './js/groove_utils.js?timestamp=' + timeStamp,
         './js/alphatab_loader.js?timestamp=' + timeStamp,
-        './js/display_mode.js?timestamp=' + timeStamp,
         './js/groove_to_guitarpro.js?timestamp=' + timeStamp,
         './js/groove_practices.js?timestamp=' + timeStamp,
         './js/groove_writer.js?timestamp=' + timeStamp,
