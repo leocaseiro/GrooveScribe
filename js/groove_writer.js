@@ -5114,7 +5114,7 @@ function GrooveWriter() {
 		grooveStorage.remove(name);
 		var filter = document.getElementById("myGroovesSearchInput").value;
 		root.renderMyGroovesList(filter);
-		showToast("“" + name + "” deleted.", false);
+		showToast("\u201c" + name + "\u201d deleted.", false);
 	};
 
 	root.exportGroovesClick = function () {
