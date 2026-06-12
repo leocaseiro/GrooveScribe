@@ -5038,4 +5038,42 @@ function GrooveWriter() {
 		root.closeSaveGroovePopup();
 	};
 
+	root.loadSavedGroove = function (name) {
+		var groove = grooveStorage.getByName(name);
+		if (!groove) return;
+		root.myGrooveUtils.hideContextMenu(document.getElementById("myGroovesMenu"));
+		root.loadNewGroove(groove.url);
+	};
+
+	root.editSavedGroove = function (name) {
+		var groove = grooveStorage.getByName(name);
+		if (!groove) return;
+		root.myGrooveUtils.hideContextMenu(document.getElementById("myGroovesMenu"));
+		root.openSaveGroovePopup(groove.name, groove.artist, groove.comment);
+	};
+
+	root.deleteSavedGrooveConfirm = function (name) {
+		var listEl = document.getElementById("myGroovesList");
+		if (!listEl) return;
+		var items = listEl.querySelectorAll("[data-groove-name]");
+		var target = null;
+		for (var i = 0; i < items.length; i++) {
+			if (items[i].getAttribute("data-groove-name") === name) { target = items[i]; break; }
+		}
+		if (!target) return;
+		var safeName = name.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
+		target.outerHTML =
+			'<div class="myGrooveDeleteConfirm">' +
+			'Delete &ldquo;' + escapeHtml(name) + '&rdquo;? ' +
+			'<span class="myGrooveDeleteYes" onclick="myGrooveWriter.deleteSavedGroove(\'' + safeName + '\')">Yes, delete</span>' +
+			'<span class="myGrooveDeleteNo" onclick="myGrooveWriter.renderMyGroovesList(document.getElementById(\'myGroovesSearchInput\').value)">Cancel</span>' +
+			'</div>';
+	};
+
+	root.deleteSavedGroove = function (name) {
+		grooveStorage.remove(name);
+		var filter = document.getElementById("myGroovesSearchInput").value;
+		root.renderMyGroovesList(filter);
+	};
+
 } // end of class
