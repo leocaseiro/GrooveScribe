@@ -840,6 +840,25 @@ function GrooveWriter() {
 
 	}
 
+	function escapeHtml(str) {
+		return String(str)
+			.replace(/&/g, "&amp;")
+			.replace(/</g, "&lt;")
+			.replace(/>/g, "&gt;")
+			.replace(/"/g, "&quot;");
+	}
+
+	var toastTimer = null;
+	function showToast(msg, isError) {
+		var toast = document.getElementById("gsToast");
+		if (!toast) return;
+		toast.textContent = msg;
+		toast.className = isError ? "error" : "";
+		toast.style.display = "block";
+		clearTimeout(toastTimer);
+		toastTimer = setTimeout(function () { toast.style.display = "none"; }, 4000);
+	}
+
 	function getTagPosition(tag) {
 		var xVal = 0,
 				yVal = 0;
@@ -4908,6 +4927,230 @@ function GrooveWriter() {
 
 		newHTML += '</span>\n';
 		return newHTML;
+	};
+
+	// ===== My Grooves Feature =====
+
+	root.myGroovesAnchorClick = function () {
+		var contextMenu = document.getElementById("myGroovesMenu");
+		if (contextMenu) {
+			var anchorPoint = document.getElementById("myGroovesAnchor");
+			if (anchorPoint) {
+				var anchorPos = getTagPosition(anchorPoint);
+				contextMenu.style.top = (anchorPos.y + anchorPoint.offsetHeight) + "px";
+				contextMenu.style.left = (anchorPos.x + anchorPoint.offsetWidth - 320) + "px";
+			}
+			var searchInput = document.getElementById("myGroovesSearchInput");
+			if (searchInput) searchInput.value = "";
+			root.renderMyGroovesList("");
+			root.myGrooveUtils.showContextMenu(contextMenu);
+		}
+	};
+
+	root.renderMyGroovesList = function (filter) {
+		var grooves = grooveStorage.getAll();
+		var lc = (filter || "").toLowerCase();
+		if (lc) {
+			grooves = grooves.filter(function (g) {
+				return (g.name || "").toLowerCase().indexOf(lc) >= 0 ||
+				       (g.artist || "").toLowerCase().indexOf(lc) >= 0 ||
+				       (g.comment || "").toLowerCase().indexOf(lc) >= 0;
+			});
+		}
+		var listEl = document.getElementById("myGroovesList");
+		if (!listEl) return;
+		if (grooves.length === 0) {
+			listEl.innerHTML = '<div class="myGroovesEmpty">' +
+				(lc ? "No matches found." : "No saved grooves yet. Use Save to get started.") +
+				'</div>';
+			return;
+		}
+		var html = "";
+		grooves.forEach(function (g) {
+			var meta = [g.artist, g.comment].filter(Boolean).join(" · ");
+			var safeName = g.name.replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/"/g, "&quot;").replace(/"/g, "&quot;");
+			html += '<div class="myGrooveLI" data-groove-name="' + escapeHtml(g.name) + '">';
+			html +=   '<div class="myGrooveInfo" onclick="myGrooveWriter.loadSavedGroove(\'' + safeName + '\')">';
+			html +=     '<div class="myGrooveName">' + escapeHtml(g.name) + '</div>';
+			if (meta) {
+				html += '<div class="myGrooveMeta">' + escapeHtml(meta) + '</div>';
+			}
+			html +=   '</div>';
+			html +=   '<div class="myGrooveActions">';
+			html +=     '<span class="myGrooveActionBtn" title="Edit" onclick="myGrooveWriter.editSavedGroove(\'' + safeName + '\'); event.stopPropagation();"><i class="fa fa-pencil"></i></span>';
+			html +=     '<span class="myGrooveActionBtn" title="Delete" onclick="myGrooveWriter.deleteSavedGrooveConfirm(\'' + safeName + '\'); event.stopPropagation();"><i class="fa fa-trash"></i></span>';
+			html +=   '</div>';
+			html += '</div>';
+		});
+		listEl.innerHTML = html;
+	};
+
+	root.filterMyGrooves = function (value) {
+		root.renderMyGroovesList(value);
+	};
+
+	root.openSaveGroovePopup = function (name, artist, comment) {
+		document.getElementById("saveGrooveName").value = name || "";
+		document.getElementById("saveGrooveArtist").value = artist || "";
+		document.getElementById("saveGrooveComment").value = comment || "";
+		root.saveGrooveNameChanged();
+		document.getElementById("saveGroovePopup").style.display = "block";
+	};
+
+	root.closeSaveGroovePopup = function () {
+		document.getElementById("saveGroovePopup").style.display = "none";
+	};
+
+	root.saveGrooveNameChanged = function () {
+		var name = (document.getElementById("saveGrooveName").value || "").trim();
+		var exists = name ? grooveStorage.getByName(name) !== null : false;
+		document.getElementById("saveGrooveNewBtn").disabled = !name;
+		document.getElementById("saveGrooveDuplicateWarning").style.display = exists ? "block" : "none";
+		document.getElementById("saveGrooveReplaceBtn").style.display = exists ? "inline-block" : "none";
+	};
+
+	root.saveCurrentGrooveClick = function () {
+		root.myGrooveUtils.hideContextMenu(document.getElementById("myGroovesMenu"));
+		root.openSaveGroovePopup(
+			document.getElementById("tuneTitle").value.trim(),
+			document.getElementById("tuneAuthor").value.trim(),
+			document.getElementById("tuneComments").value.trim()
+		);
+	};
+
+	root.saveAsGrooveClick = function () {
+		root.myGrooveUtils.hideContextMenu(document.getElementById("myGroovesMenu"));
+		root.openSaveGroovePopup(
+			"",
+			document.getElementById("tuneAuthor").value.trim(),
+			document.getElementById("tuneComments").value.trim()
+		);
+	};
+
+	root.confirmSaveGroove = function (action) {
+		var name = (document.getElementById("saveGrooveName").value || "").trim();
+		var artist = (document.getElementById("saveGrooveArtist").value || "").trim();
+		var comment = (document.getElementById("saveGrooveComment").value || "").trim();
+		if (!name) return;
+
+		var autoDeduped = false;
+		if (action === "new" && grooveStorage.getByName(name)) {
+			var n = 2;
+			var candidate = name + " (" + n + ")";
+			while (grooveStorage.getByName(candidate)) {
+				n++;
+				candidate = name + " (" + n + ")";
+			}
+			name = candidate;
+			autoDeduped = true;
+		}
+
+		// Sync DOM fields to the final name so get_FullURLForPage() captures it.
+		// For auto-deduped names (user never typed the "(2)" suffix), restore
+		// the original working title afterwards so the on-screen state is unchanged.
+		var titleEl = document.getElementById("tuneTitle");
+		var authorEl = document.getElementById("tuneAuthor");
+		var commentEl = document.getElementById("tuneComments");
+		var origTitle = titleEl ? titleEl.value : "";
+		var origAuthor = authorEl ? authorEl.value : "";
+		var origComment = commentEl ? commentEl.value : "";
+		if (titleEl) titleEl.value = name;
+		if (authorEl) authorEl.value = artist;
+		if (commentEl) commentEl.value = comment;
+		var url = get_FullURLForPage();
+		if (autoDeduped) {
+			if (titleEl) titleEl.value = origTitle;
+			if (authorEl) authorEl.value = origAuthor;
+			if (commentEl) commentEl.value = origComment;
+		}
+
+		grooveStorage.save({ name: name, artist: artist, comment: comment, url: url });
+		root.closeSaveGroovePopup();
+		root.refresh_ABC();
+	};
+
+	root.loadSavedGroove = function (name) {
+		var groove = grooveStorage.getByName(name);
+		if (!groove) return;
+		root.myGrooveUtils.hideContextMenu(document.getElementById("myGroovesMenu"));
+		root.loadNewGroove(groove.url);
+		// The URL may contain a different title than the stored name (e.g. "Leo (2)"
+		// saved when #tuneTitle was still "Leo"). Always restore from the stored record.
+		var titleEl = document.getElementById("tuneTitle");
+		var authorEl = document.getElementById("tuneAuthor");
+		var commentEl = document.getElementById("tuneComments");
+		if (titleEl) titleEl.value = groove.name;
+		if (authorEl) authorEl.value = groove.artist || "";
+		if (commentEl) commentEl.value = groove.comment || "";
+		root.refresh_ABC();
+	};
+
+	root.editSavedGroove = function (name) {
+		var groove = grooveStorage.getByName(name);
+		if (!groove) return;
+		root.myGrooveUtils.hideContextMenu(document.getElementById("myGroovesMenu"));
+		root.openSaveGroovePopup(groove.name, groove.artist, groove.comment);
+	};
+
+	root.deleteSavedGrooveConfirm = function (name) {
+		var listEl = document.getElementById("myGroovesList");
+		if (!listEl) return;
+		var items = listEl.querySelectorAll("[data-groove-name]");
+		var target = null;
+		for (var i = 0; i < items.length; i++) {
+			if (items[i].getAttribute("data-groove-name") === name) { target = items[i]; break; }
+		}
+		if (!target) return;
+		var safeName = name.replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/"/g, "&quot;");
+		target.outerHTML =
+			'<div class="myGrooveDeleteConfirm">' +
+			'Delete &ldquo;' + escapeHtml(name) + '&rdquo;? ' +
+			'<span class="myGrooveDeleteYes" onclick="myGrooveWriter.deleteSavedGroove(\'' + safeName + '\')">Yes, delete</span>' +
+			'<span class="myGrooveDeleteNo" onclick="myGrooveWriter.renderMyGroovesList(document.getElementById(\'myGroovesSearchInput\').value); event.stopPropagation();">Cancel</span>' +
+			'</div>';
+	};
+
+	root.deleteSavedGroove = function (name) {
+		grooveStorage.remove(name);
+		var filter = document.getElementById("myGroovesSearchInput").value;
+		root.renderMyGroovesList(filter);
+		showToast("\u201c" + name + "\u201d deleted.", false);
+	};
+
+	root.exportGroovesClick = function () {
+		var json = grooveStorage.exportJSON();
+		var dataURL = "data:application/json;charset=utf-8," + encodeURIComponent(json);
+		var a = document.createElement("a");
+		a.href = dataURL;
+		a.download = "groovescribe-my-grooves.json";
+		document.body.appendChild(a);
+		a.click();
+		document.body.removeChild(a);
+	};
+
+	root.importGroovesClick = function () {
+		document.getElementById("myGroovesImportFile").click();
+	};
+
+	root.handleImportFile = function (event) {
+		var file = event.target.files[0];
+		if (!file) return;
+		var reader = new FileReader();
+		reader.onload = function (e) {
+			try {
+				var result = grooveStorage.importJSON(e.target.result);
+				var msg = result.added + " imported";
+				if (result.cloned > 0) {
+					msg += ", " + result.cloned + " cloned with '(imported)' suffix";
+				}
+				showToast(msg + ".", false);
+				root.renderMyGroovesList("");
+			} catch (err) {
+				showToast("Import error: " + err.message, true);
+			}
+			event.target.value = "";
+		};
+		reader.readAsText(file);
 	};
 
 } // end of class

@@ -4,6 +4,7 @@
 	<!--Copyright 2015-2020 Lou Montulli, Mike Johnston  GPL V2.0 Please See LICENSE.txt for more details -->
 
     <head>
+		<meta charset="UTF-8">
 		<title>Groove Scribe</title>
 
 		<meta name="apple-mobile-web-app-capable" content="yes">
@@ -56,6 +57,7 @@
 		<script src="./js/jsmidgen.js" type="text/javascript"></script>
 		<!--   our custom JS  -->
 		<script src="js/groove_practices.js"></script>
+		<script src="js/groove_storage.js"></script>
 		<!-- alphaTab CDN loader: must load BEFORE groove_writer.js, which calls createAlphaTabLoader() -->
 		<script src="js/alphatab_loader.js"></script>
 		<script src="js/groove_writer.js"></script>
@@ -129,6 +131,7 @@
 				<span id="upperRight">
 					<span class="rightButtons grooveDB_hidden" id="permutationAnchor" onclick="myGrooveWriter.permutationAnchorClick(event);"><i class="fa fa-bars"></i> Permutations</span>
 					<span class="rightButtons" id="groovesAnchor" onclick="myGrooveWriter.groovesAnchorClick(event);"><i class="fa fa-bars"></i> Grooves</span>
+					<span class="rightButtons" id="myGroovesAnchor" onclick="myGrooveWriter.myGroovesAnchorClick(event);"><i class="fa fa-bookmark"></i> My Grooves</span>
 					<span class="rightButtons" id="helpAnchor" onclick="myGrooveWriter.helpAnchorClick(event);"><i class="fa fa-bars"></i> Help</span>
 				</span>
 			</div>
@@ -193,6 +196,7 @@
 					<span class=" grooveDB_hidden pageBottomButton" id="stickingsButton" onclick="myGrooveWriter.stickingsAnchorClick();"><span class="bottomButtonLabel">STICKINGS</span></span>
 					<span class=" grooveDB_hidden pageBottomButton" id="downloadButton" onclick="myGrooveWriter.DownloadAnchorClick();"><span class="bottomButtonIcon"><i class="fa fa-download fa-2x"></i></span><span class="bottomButtonLabel">DOWNLOAD</span></span>
 					<span class=" grooveDB_hidden pageBottomButton" id="printButton" onclick="myGrooveWriter.printMusic();"><span class="bottomButtonIcon"><i class="fa fa-print fa-2x"></i></span><span class="bottomButtonLabel">PRINT</span></span>
+					<span class="pageBottomButton edit-block" id="saveLocalButton" onclick="event.preventDefault(); myGrooveWriter.saveCurrentGrooveClick();"><span class="bottomButtonIcon"><i class="fa fa-bookmark fa-2x"></i></span><span class="bottomButtonLabel">SAVE LOCAL</span></span>
 					<span class=" grooveDB_hidden pageBottomButton" id="saveGroovePracticeButton" onclick="myGroovePractices.saveGroovePractice();"><span class="bottomButtonIcon"><i class="fa fa-save fa-2x"></i></span><span class="bottomButtonLabel">SAVE</span></span>
 					<span class=" grooveDB_hidden pageBottomButton" id="shareSaveButton" onclick="event.preventDefault(); myGrooveWriter.show_FullURLPopup();"><span class="bottomButtonIcon"><i class="fa fa-share fa-2x"></i></span><span class="bottomButtonLabel">SHARE</span></span>
 					<span class="pageBottomButton edit-block grooveDB_hidden" id="alphaTexButton" onclick="event.preventDefault(); myGrooveWriter.toggleAlphaTexDisplay();"><span class="bottomButtonIcon"><i class="fa fa-code fa-2x"></i></span><span class="bottomButtonLabel">ALPHATEX</span></span>
@@ -443,6 +447,24 @@
 				<li onclick='myGrooveWriter.GPSaveAs();'><b>Download Guitar Pro file</b></li>
 			</ul>
 		</div>
+
+		<div id="myGroovesMenu">
+			<div id="myGroovesSearchRow">
+				<input type="text" id="myGroovesSearchInput" placeholder="Search name, artist, comment..." oninput="myGrooveWriter.filterMyGrooves(this.value);" onclick="event.stopPropagation();">
+			</div>
+			<div id="myGroovesList">
+				<!-- populated by renderMyGroovesList() -->
+			</div>
+			<div id="myGroovesFooter">
+				<span class="myGroovesFooterBtn" onclick="myGrooveWriter.saveCurrentGrooveClick(); event.stopPropagation();">&#128190; Save</span>
+				<span class="myGroovesFooterBtn" onclick="myGrooveWriter.saveAsGrooveClick(); event.stopPropagation();">&#128462; Save As</span>
+				<span class="myGroovesFooterBtn" onclick="myGrooveWriter.exportGroovesClick(); event.stopPropagation();">&#8593; Export</span>
+				<span class="myGroovesFooterBtn" onclick="myGrooveWriter.importGroovesClick(); event.stopPropagation();">&#8595; Import</span>
+				<div id="myGroovesStatus"></div>
+			</div>
+			<input type="file" id="myGroovesImportFile" accept=".json" style="display:none;" onchange="myGrooveWriter.handleImportFile(event);">
+		</div>
+
 		<div id="grooveListWrapper">
 			<script>
 				document.write(grooves.getGroovesAsHTML());
@@ -479,6 +501,30 @@
 			<div id="timeSigPopupButtons">
 			<button id="timeSigPopupCancel" onclick="myGrooveWriter.timeSigPopupClose('cancel');">Cancel</button>
 			<button id="timeSigPopupOK" onclick="myGrooveWriter.timeSigPopupClose('ok');">Done</button>
+			</div>
+		</div>
+
+		<!-- Save Groove popup — hidden by default -->
+		<div id="saveGroovePopup">
+			<span id="saveGroovePopupClose" onclick="myGrooveWriter.closeSaveGroovePopup();"><i class="fa fa-lg fa-times-circle"></i></span>
+			<div id="saveGroovePopupTitle">Save Groove</div>
+			<div class="saveGrooveField">
+				<label for="saveGrooveName">Name:</label>
+				<input type="text" id="saveGrooveName" oninput="myGrooveWriter.saveGrooveNameChanged();">
+			</div>
+			<div class="saveGrooveField">
+				<label for="saveGrooveArtist">Artist:</label>
+				<input type="text" id="saveGrooveArtist">
+			</div>
+			<div class="saveGrooveField">
+				<label for="saveGrooveComment">Comment:</label>
+				<input type="text" id="saveGrooveComment">
+			</div>
+			<div id="saveGrooveDuplicateWarning">A groove with this name already exists.</div>
+			<div id="saveGroovePopupButtons">
+				<button id="saveGrooveNewBtn" onclick="myGrooveWriter.confirmSaveGroove('new');" disabled>Save as New</button>
+				<button id="saveGrooveReplaceBtn" onclick="myGrooveWriter.confirmSaveGroove('replace');">Replace Existing</button>
+				<button id="saveGrooveCancelBtn" onclick="myGrooveWriter.closeSaveGroovePopup();">Cancel</button>
 			</div>
 		</div>
 
@@ -555,6 +601,8 @@
 
 
 	</div>
+
+	<div id="gsToast"></div>
 
     </body>
 </html>
